@@ -1,5 +1,6 @@
 package net.wanhe.dorm;
 
+import net.wanhe.dorm.system.BuildingSystem;
 import net.wanhe.dorm.system.UserSystem;
 import net.wanhe.dorm.util.ScannerUtil;
 
@@ -13,7 +14,7 @@ public class Run {
             int c = print();
             switch (c) {
                 case 1:
-                    System.out.println("该功能尚未实现");
+                    new BuildingSystem().run();
                     break;
                 case 2:
                     System.out.println("该功能尚未实现");

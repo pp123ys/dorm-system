@@ -39,11 +39,11 @@ public class StuController {
         for (Student s : list) {
             AlignUtil.printRow(new String[]{
                     String.valueOf(s.getNo()),
-                    s.getName(),
+                    AlignUtil.truncate(s.getName(), 10),
                     s.getSex(),
                     s.getAge() == null ? "" : String.valueOf(s.getAge()),
-                    s.getPhone() == null ? "" : s.getPhone(),
-                    s.location()}, w);
+                    AlignUtil.truncate(s.getPhone() == null ? "" : s.getPhone(), 16),
+                    AlignUtil.truncate(s.location(), 18)}, w);
         }
         AlignUtil.printLine(w);
     }

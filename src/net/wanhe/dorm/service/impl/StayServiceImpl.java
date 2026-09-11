@@ -127,7 +127,8 @@ public class StayServiceImpl implements StayService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new StayException("办理入住失败, 已回滚", e);
+            //commit 失败时 JdbcUtil 已清理事务连接, 此处回滚是空操作, 故文案不写死"已回滚"
+            throw new StayException("办理入住失败(已回滚或提交失败), 请查询该学生当前状态", e);
         }
     }
 
@@ -160,7 +161,7 @@ public class StayServiceImpl implements StayService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new StayException("办理退住失败, 已回滚", e);
+            throw new StayException("办理退住失败(已回滚或提交失败), 请查询该学生当前状态", e);
         }
     }
 }

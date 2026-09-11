@@ -2977,7 +2977,7 @@ public class RoomServiceImpl implements RoomService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new RoomException("新增房间失败, 已回滚", e);
+            throw new RoomException("新增房间失败, 已回滚或提交失败", e);
         }
     }
 
@@ -3022,7 +3022,7 @@ public class RoomServiceImpl implements RoomService {
             throw e;
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new RoomException("调整房间容量失败, 已回滚", e);
+            throw new RoomException("调整房间容量失败, 已回滚或提交失败", e);
         }
     }
 
@@ -3070,7 +3070,7 @@ public class RoomServiceImpl implements RoomService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new RoomException("删除房间失败, 已回滚", e);
+            throw new RoomException("删除房间失败, 已回滚或提交失败", e);
         }
     }
 
@@ -4593,7 +4593,7 @@ public class StayServiceImpl implements StayService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new StayException("办理入住失败, 已回滚", e);
+            throw new StayException("办理入住失败(已回滚或提交失败), 请查询该学生当前状态", e);
         }
     }
 
@@ -4626,7 +4626,7 @@ public class StayServiceImpl implements StayService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new StayException("办理退住失败, 已回滚", e);
+            throw new StayException("办理退住失败(已回滚或提交失败), 请查询该学生当前状态", e);
         }
     }
 }

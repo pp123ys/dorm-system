@@ -69,7 +69,7 @@ public class RoomServiceImpl implements RoomService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new RoomException("新增房间失败, 已回滚", e);
+            throw new RoomException("新增房间失败, 已回滚或提交失败", e);
         }
     }
 
@@ -114,7 +114,7 @@ public class RoomServiceImpl implements RoomService {
             throw e;
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new RoomException("调整房间容量失败, 已回滚", e);
+            throw new RoomException("调整房间容量失败, 已回滚或提交失败", e);
         }
     }
 
@@ -162,7 +162,7 @@ public class RoomServiceImpl implements RoomService {
             JdbcUtil.commit();
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
-            throw new RoomException("删除房间失败, 已回滚", e);
+            throw new RoomException("删除房间失败, 已回滚或提交失败", e);
         }
     }
 

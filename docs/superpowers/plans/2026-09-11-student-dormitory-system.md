@@ -5516,7 +5516,7 @@ Get-Content out\acceptance.log -Encoding UTF8 | Select-String -Pattern "build fa
 
 Expected: 第三次命令（`Exception`）**无命中**（程序没有崩溃、没有异常堆栈）；后两条也无命中。
 
-- [ ] **Step 5: 逐条确认 10 个反例都出现**
+- [ ] **Step 5: 逐条确认 16 个反例都出现**
 
 ```powershell
 $log = "out\acceptance.log"
@@ -5526,7 +5526,7 @@ $log = "out\acceptance.log"
 }
 ```
 
-Expected: 每一行都 `=> 1`（或更多），没有任何一行是 `=> 0`。
+Expected: 每一行都 `=> 1`（或更多），没有任何一行是 `=> 0`（共 16 条反例）。
 
 - [ ] **Step 6: SQL 复核终态**
 
@@ -5585,7 +5585,7 @@ Expected: `build ok`；`git status --short` 只剩未跟踪的 `out/`、`test-in
 
 ```powershell
 git add -A
-git commit -m "test: 全流程验收脚本(含10个反例)与数据一致性复核"
+git commit -m "test: 全流程验收脚本(含16个反例)与数据一致性复核"
 ```
 
 - [ ] **Step 11: 交回用户确认遗留项**

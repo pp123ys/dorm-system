@@ -44,8 +44,12 @@ public class JdbcUtil {
 
     /*
      * 开启事务
+     * 不支持嵌套: 已有事务时直接报错, 避免旧连接被孤儿化导致静默丢失
      */
     public static void beginTransaction() {
+        if (TX.get() != null) {
+            throw new IllegalStateException("事务已开启, 不支持嵌套开启事务");
+        }
         try {
             Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             conn.setAutoCommit(false);

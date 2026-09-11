@@ -397,6 +397,7 @@ public static void rollback()        // 回滚并归还连接
 保留：连接常量（`jdbc:mysql://localhost:3306/rg01?...`、`root`/`123456`）、驱动注册、`getConnection()`、`close()`。
 新增：`beginTransaction()` / `commit()` / `rollbackQuietly()`，内部 `ThreadLocal<Connection>` 持有事务连接；事务中 `close()` 不关连接。
 
+- `beginTransaction()` 开头有嵌套防护：当前线程已持有事务连接时直接 `throw IllegalStateException`，防止旧连接被孤儿化后静默丢失数据（质量审查发现并修复）。
 - `beginTransaction()` / `commit()` **不声明 `throws SQLException`**，内部把 SQL 异常包装成 `RuntimeException`，这样 Service 里的事务模板只需要处理业务异常，不必写受检的 `SQLException` 处理代码。
 - `rollbackQuietly()` 吞掉回滚自身的异常并打印堆栈，避免回滚失败掩盖真正的业务异常。
 - Service 统一使用这个事务模板：

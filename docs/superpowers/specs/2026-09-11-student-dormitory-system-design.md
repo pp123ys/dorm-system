@@ -313,7 +313,8 @@ public static void rollbackQuietly()    // 回滚并归还连接; 回滚自身�
 
 - Service 校验失败：抛 `BuildingException` / `RoomException` / `StuException` / `StayException` / `UserException`，消息为可直接给用户看的中文。
 - DAO 层 SQL 异常：包装为 `RuntimeException("XxxDao.方法名失败", e)`（沿用现有风格），保留原始异常链。
-- **未预期运行时错误的兜底放在 `Run.main` 的菜单分发处**（而不是每个 Controller 各写一遍）：`catch (RuntimeException e) { 打印 "操作失败:" + e.getMessage(); }` 后回到菜单继续，**数据库/DAO 故障不会让程序崩掉**。
+- **未预期运行时错误的兜底放在 `Run.main`**（而不是每个 Controller 各写一遍）：菜单分发处 `catch (RuntimeException e) { 打印 "操作失败:" + e.getMessage(); }` 后回到菜单继续，**数据库/DAO 故障不会让程序崩掉**。
+- **登录阶段同样兜底**：登录时若数据库不可用，打印 `登录失败(数据库连接异常?):...` 后干净退出（此时重试无意义，因此不回到登录循环，也不打印堆栈）。
 - 例外：读到 **EOF** 时（`Scanner` 抛 `NoSuchElementException`，通常意味着验收脚本行数不足）**直接抛出退出**——这种情况必须立刻失败，不能被兜住后继续循环（那会掩盖脚本错误）。`Run.main` 里先 `catch (NoSuchElementException e) { throw e; }` 再 `catch (RuntimeException e)`，顺序不可颠倒。
 - `Run.main` 的 `print()`（菜单读取）**放在 try 之外**：否则输入耗尽时会「打印提示 → 再读 → 再耗尽」死循环。
 - 输入层：`ScannerUtil` 统一处理非数字输入（重试而不是抛 `InputMismatchException`）。

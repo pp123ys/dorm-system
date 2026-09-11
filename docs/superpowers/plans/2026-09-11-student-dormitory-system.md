@@ -5680,7 +5680,7 @@ Task 1–11 逐任务实现并双审通过后，最终全量审查又发现 4 �
 
 | # | 问题 | 修改 | 位置 |
 |---|---|---|---|
-| 1 | **未预期运行时错误会让整个程序崩掉**：Controller 只 `catch` 各自的业务异常（且业务异常 `extends Throwable`，与 `RuntimeException` 不同族），数据库/DAO 故障会直接抛到 `main` 打印堆栈退出，违反规格 §7.2 | 在 `Run.main` 的菜单分发处加兜底：`catch (NoSuchElementException e) { throw e; }`（EOF 必须立刻失败，避免掩盖脚本行数不足）→ `catch (RuntimeException e) { 打印 "操作失败:" + message; }` 后回到菜单。`print()` 保持在 try 之外，避免输入耗尽时死循环 | `src/net/wanhe/dorm/Run.java` |
+| 1 | **未预期运行时错误会让整个程序崩掉**：Controller 只 `catch` 各自的业务异常（且业务异常 `extends Throwable`，与 `RuntimeException` 不同族），数据库/DAO 故障会直接抛到 `main` 打印堆栈退出，违反规格 §7.2 | 在 `Run.main` 的菜单分发处加兜底：`catch (NoSuchElementException e) { throw e; }`（EOF 必须立刻失败，避免掩盖脚本行数不足）→ `catch (RuntimeException e) { 打印 "操作失败:" + message; }` 后回到菜单。`print()` 保持在 try 之外，避免输入耗尽时死循环。**登录阶段同样兜底**：数据库不可用时打印 `登录失败(数据库连接异常?):...` 后干净退出（不重试、不打印堆栈） | `src/net/wanhe/dorm/Run.java` |
 | 2 | **入住成功后没有打印住宿位置**（规格 §8.3 明确要求） | 入住成功后重新查一次学生并打印 `办理入住成功, 住宿位置:1号楼101房1床` | `src/net/wanhe/dorm/controller/StayController.java` |
 | 3 | **`test-inputs/skeleton.txt` 是 Task 3 阶段的遗留脚本**（那时还没有登录模块），有登录后运行会因输入不足报 `NoSuchElementException`，而 README 却把它列为可用脚本 | 删除该脚本与说明里的对应行，并说明删除原因 | `test-inputs/` |
 | 4 | 说明文字有两处与脚本实际不符 | ① 本文件 Task 11 阶段表 C 段「两次 `操作成功`」→「一次 `操作成功`（停用床位 26）」；② `test-inputs/README.md` C 段「重复房号 101 被拒」→「重复房号 104 被拒」 | 本文件 + `test-inputs/README.md` |

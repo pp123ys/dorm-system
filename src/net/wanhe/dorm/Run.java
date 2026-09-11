@@ -13,8 +13,16 @@ import java.util.NoSuchElementException;
 public class Run {
 
     public static void main(String[] args) {
-        UserSystem us = new UserSystem();
-        us.run();
+        //登录阶段也可能遇到数据库故障: 提示后干净退出, 不打印堆栈
+        //(登录时数据库不可用, 重试没有意义, 因此这里直接结束)
+        try {
+            new UserSystem().run();
+        } catch (NoSuchElementException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            System.out.println("登录失败(数据库连接异常?):" + e.getMessage());
+            return;
+        }
         boolean f = true;
         while (f) {
             //菜单读取放在 try 外面: 输入耗尽(EOF)应当直接退出, 而不是被兜住后死循环

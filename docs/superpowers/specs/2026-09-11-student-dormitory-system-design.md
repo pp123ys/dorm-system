@@ -294,24 +294,28 @@ CREATE TABLE t_checkin (
 
 现状：`JdbcUtil` 只有 `getConnection()` 与 `close(rs, state, conn)`，每次调用新建连接，无法保证「改 `bed_id` + 写流水」的原子性。
 
-方案：`JdbcUtil` 内用 `ThreadLocal<Connection>` 持有当前连接，新增三个方法：
+方案：`JdbcUtil` 内用 `ThreadLocal<Connection>` 持有当前连接，新增三个方法（**实现后的实际签名**，均不声明受检异常）：
 
 ```java
-public static void beginTransaction() throws SQLException   // 取连接 + setAutoCommit(false)
-public static void commit()          // 提交并归还连接
-public static void rollback()        // 回滚并归还连接
+public static void beginTransaction()   // 取连接 + setAutoCommit(false); 已有事务时抛 IllegalStateException(不支持嵌套)
+public static void commit()             // 提交并归还连接; 失败包装成 RuntimeException("提交事务失败")
+public static void rollbackQuietly()    // 回滚并归还连接; 回滚自身失败只打印堆栈, 不掩盖业务异常
 ```
 
 - 事务开启后，`JdbcUtil.getConnection()` 返回的是**同一个连接**，因此**各 Dao 的方法签名完全不用改**。
-- `close(rs, state, conn)` 在事务中**不关闭连接**，只关 `ResultSet`/`PreparedStatement`，由 `commit`/`rollback` 统一归还。
+- `close(rs, state, conn)` 在事务中**不关闭连接**，只关 `ResultSet`/`PreparedStatement`，由 `commit`/`rollbackQuietly` 统一归还。
 - 本程序是单线程控制台，`ThreadLocal` 无并发风险。
-- `service/impl/StayServiceImpl` 的两个写方法用 `try / catch / rollback / finally` 包裹。
+- `service/impl/StayServiceImpl` 的两个写方法、`RoomServiceImpl` 的三个写方法都用统一模板包裹：
+  `try { beginTransaction(); 多个写操作; commit(); } catch (RuntimeException e) { rollbackQuietly(); throw ... }`。
+- `commit()` 失败时连接已在 `finally` 里归还，此时 `rollbackQuietly()` 是空操作，因此失败文案统一写成「已回滚或提交失败」，不写死「已回滚」。
 
 ### 7.2 错误处理
 
 - Service 校验失败：抛 `BuildingException` / `RoomException` / `StuException` / `StayException` / `UserException`，消息为可直接给用户看的中文。
 - DAO 层 SQL 异常：包装为 `RuntimeException("XxxDao.方法名失败", e)`（沿用现有风格），保留原始异常链。
-- Controller：`catch (RuntimeException e)` → 打印 `e.getMessage()` → 返回子菜单。**任何输入错误都不允许让程序崩溃退出。**
+- **未预期运行时错误的兜底放在 `Run.main` 的菜单分发处**（而不是每个 Controller 各写一遍）：`catch (RuntimeException e) { 打印 "操作失败:" + e.getMessage(); }` 后回到菜单继续，**数据库/DAO 故障不会让程序崩掉**。
+- 例外：读到 **EOF** 时（`Scanner` 抛 `NoSuchElementException`，通常意味着验收脚本行数不足）**直接抛出退出**——这种情况必须立刻失败，不能被兜住后继续循环（那会掩盖脚本错误）。`Run.main` 里先 `catch (NoSuchElementException e) { throw e; }` 再 `catch (RuntimeException e)`，顺序不可颠倒。
+- `Run.main` 的 `print()`（菜单读取）**放在 try 之外**：否则输入耗尽时会「打印提示 → 再读 → 再耗尽」死循环。
 - 输入层：`ScannerUtil` 统一处理非数字输入（重试而不是抛 `InputMismatchException`）。
 
 ## 8. 菜单与交互
@@ -344,11 +348,13 @@ public static void rollback()        // 回滚并归还连接
 ### 8.3 交互细则
 
 - **新增房间**只输入容量，床位由程序生成，不逐个录入。
-- **办理入住**输入学号后：显示学生信息 → 列出有空床的楼栋（含空床数）→ 输入楼栋 id → 列出该楼栋空床位（显示 `床位id / 房间号 / 床号`）→ 输入床位 id 完成办理；成功后打印住宿位置。
+- **办理入住**输入学号后：先做「学生是否存在 / 是否已入住」的提前校验（已入住直接提示，不再让用户选楼栋与床位）→ 列出有空床的楼栋（含空床数）→ 输入楼栋 id → 列出该楼栋空床位（显示 `床位id / 房间号 / 床号`）→ 输入床位 id 完成办理；成功后打印 `办理入住成功, 住宿位置:1号楼101房1床`。
 - **查询统计**输出为对齐表格：
   - 楼栋占用概览：楼栋、类型、房间数、总床位、已住、空床、占用率
-  - 空床位清单：楼栋、房间号、床位号
-  - 学生住宿信息：学号、姓名、性别、楼栋、房间号、床位号（未入住显示「未入住」）
+  - 空床位清单：楼栋、房间号、床位号（`0` 表示全部楼栋）
+  - 房间住宿名单：学号、姓名、性别、电话
+  - **学生住宿信息**：实现为逐行字段输出（学号/姓名/性别/电话/住宿位置），住宿位置形如 `2号楼201房1床`，未入住输出 `未入住`；不单独拆成表格列，因为它是单条记录查询（与上面的列表型查询不同）。
+  - 入住退住流水：时间、学号、姓名、操作、位置、操作人（`0` 表示全部学生）
 
 ## 9. 类与接口清单
 
@@ -384,7 +390,7 @@ public static void rollback()        // 回滚并归还连接
 | `UserService` | `User login(String loginName, String password)` |
 | `BuildingService` | `List<Building> list()`、`Building get(int id)`、`void add(Building)`、`void update(Building)`、`void delete(int id)` |
 | `RoomService` | `List<Room> listByBuilding(int buildingId)`、`List<Bed> listBeds(int roomId)`、`void add(Room)`、`void updateCapacity(int roomId, int newCapacity)`、`void delete(int roomId)`、`void updateRoomStatus(int roomId, String status)`、`void updateBedStatus(int bedId, String status)` |
-| `StuService` | `List<Student> list()`、`void add(Student)`、`void update(Student)`、`void delete(int id)` |
+| `StuService` | `List<Student> list()`、`void add(Student)`、`void update(Student)`（按 `student.getNo()` 定位，学号不可改）、`void delete(int no)`（**按学号删除**：学号是业务主键，与入住/退住按学号定位保持一致；实现了按学号查再按 id 删）|
 | `StayService` | `List<Building> buildingsWithFreeBed()`、`List<Bed> freeBeds(int buildingId)`、`Student stayInfo(int studentNo)`、`Student checkInTarget(int studentNo)`（入住前校验：不存在或已入住即抛异常，避免让用户白选一轮床位）、`void checkIn(int studentNo, int bedId, String operator)`、`void checkOut(int studentNo, String operator)` |
 | `StatService` | `List<Building> buildingOverview()`、`List<Student> roomRoster(int roomId)`、`List<Bed> freeBeds(Integer buildingId)`、`Student studentStay(int studentNo)`、`List<Checkin> checkinHistory(Integer studentNo)` |
 
@@ -421,8 +427,9 @@ public static int nextInt(String prompt)        // 非数字则提示并重试
 public static int nextInt(String prompt, int min, int max)
 public static String nextNonEmpty(String prompt) // 空串则提示并重试
 public static String nextLine(String prompt)     // 允许空
-public static boolean confirm(String prompt)     // y/n
 ```
+
+（规格早期草案里还列过 `confirm(String)`（y/n 确认）——实现时没有用到，按 YAGNI 未实现；程序里所有删除都是「输入 id 即执行」，没有二次确认步骤。）
 
 ### 10.3 `AlignUtil`
 
@@ -431,8 +438,13 @@ public static boolean confirm(String prompt)     // y/n
 ```java
 public static int width(String s)              // 按显示宽度计算（CJK 算 2）
 public static String padRight(String s, int w) // 右侧补齐到显示宽度 w
-public static String padLeft(String s, int w)
+public static String truncate(String s, int w) // 超过显示宽度 w 时截断并以 "…" 收口
+public static void printRow(String[] cells, int[] widths)
+public static void printLine(int[] widths)     // 分隔线, 每列宽度 = 列宽 + 2
 ```
+
+（`padLeft` 未实现：所有表格列都是左对齐。`truncate` 是执行中新增的——`padRight` 只补齐不截断，长文本会把整行撑错位；
+现在所有自由文本列（楼栋名/备注/房间号/姓名/电话/位置/操作人）都用 `truncate` 按列宽收口。）
 
 ## 11. 迁移与清理
 

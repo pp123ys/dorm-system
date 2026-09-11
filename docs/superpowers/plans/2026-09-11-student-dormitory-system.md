@@ -5499,7 +5499,7 @@ x
 |---|---|---|
 | A 登录 | 1–5 | `用户名或密码错误` → `请重新登录` → `登录成功` → `请输入数字`（字母当数字被拦下重试） |
 | B 楼栋 | 6–36 | `新增成功`、`该楼栋名称已存在`、`请输入数字`、`修改成功`、`该楼栋不存在`、`删除成功`、`该楼栋下还有3个房间, 请先删除房间` |
-| C 房间床位 | 37–59 | `新增成功, 已自动生成4个床位`、`该楼栋下已存在房间:104`、两次 `调整成功`、两次 `操作成功` |
+| C 房间床位 | 37–59 | `新增成功, 已自动生成4个床位`、`该楼栋下已存在房间:104`、两次 `调整成功`、一次 `操作成功`（停用床位 26） |
 | D 学生 | 60–86 | 两次 `新增成功`、`该学号已存在`、`修改成功` |
 | E 入住退住 | 87–126 | 4 个 `办理入住成功`（张三/李四/王五/孙悟空住满 101）、`该房间已住满`、`该床位已停用, 不能分配`、`性别与楼栋不符, 不能入住`、第 5 个 `办理入住成功`（赵敏）、`该学生已入住1号楼101房1床, 请先办理退住`、`该学生当前未入住, 无需退住`、`办理退住成功`（王五） |
 | F 容量与删除保护 | 127–141 | `新床位数不能少于已住人数3`、`床号大于3的床位上有1名在住学生, 请先办理退住`、`调整成功`、`房间内还有3名在住学生, 不能删除`、`删除成功`（删掉空房间 104） |
@@ -5671,5 +5671,25 @@ git commit -m "test: 全流程验收脚本(含16个反例)与数据一致性复�
 | 5.7 上 `delete bd from t_bed bd left join ...` 报语法错 | 改为 `delete from t_bed where room_id=? and bed_no>? and id not in (select bed_id from t_student where bed_id is not null)` |
 | 管道运行时中文仍乱码 | 确认 `run.bat` 已带 `-Dstdin/-Dstdout/-Dstderr.encoding=UTF-8`；仍乱码则把 `select`/`insert` 的中文改成 ASCII 断言（SQL 侧复核不受影响） |
 | `Scanner` 读到 EOF（脚本行数不够） | 日志里会看到 `NoSuchElementException`；对照 Task 11 的阶段表补足缺失的输入行 |
+
+---
+
+## 交付前修正（最终全量审查后的 4 项改动）
+
+Task 1–11 逐任务实现并双审通过后，最终全量审查又发现 4 处需要收口的问题，改动如下（均已提交并重新验收）：
+
+| # | 问题 | 修改 | 位置 |
+|---|---|---|---|
+| 1 | **未预期运行时错误会让整个程序崩掉**：Controller 只 `catch` 各自的业务异常（且业务异常 `extends Throwable`，与 `RuntimeException` 不同族），数据库/DAO 故障会直接抛到 `main` 打印堆栈退出，违反规格 §7.2 | 在 `Run.main` 的菜单分发处加兜底：`catch (NoSuchElementException e) { throw e; }`（EOF 必须立刻失败，避免掩盖脚本行数不足）→ `catch (RuntimeException e) { 打印 "操作失败:" + message; }` 后回到菜单。`print()` 保持在 try 之外，避免输入耗尽时死循环 | `src/net/wanhe/dorm/Run.java` |
+| 2 | **入住成功后没有打印住宿位置**（规格 §8.3 明确要求） | 入住成功后重新查一次学生并打印 `办理入住成功, 住宿位置:1号楼101房1床` | `src/net/wanhe/dorm/controller/StayController.java` |
+| 3 | **`test-inputs/skeleton.txt` 是 Task 3 阶段的遗留脚本**（那时还没有登录模块），有登录后运行会因输入不足报 `NoSuchElementException`，而 README 却把它列为可用脚本 | 删除该脚本与说明里的对应行，并说明删除原因 | `test-inputs/` |
+| 4 | 说明文字有两处与脚本实际不符 | ① 本文件 Task 11 阶段表 C 段「两次 `操作成功`」→「一次 `操作成功`（停用床位 26）」；② `test-inputs/README.md` C 段「重复房号 101 被拒」→「重复房号 104 被拒」 | 本文件 + `test-inputs/README.md` |
+
+另外把最终审查指出的**规格与实现的偏差**回写进了设计文档（见该文档 §7.1/§7.2/§8.3/§9.3/§10.2/§10.3）：
+`JdbcUtil` 实际方法签名（无受检异常 + 嵌套防护 + `rollbackQuietly`）、`StuService.delete(int no)` 按学号删除、
+`ScannerUtil` 未实现 `confirm`、`AlignUtil` 未实现 `padLeft` 但新增了 `truncate`、学生住宿信息采用逐行字段输出。
+
+**未采纳的审查建议**（记录取舍，避免下次重复讨论）：
+`JdbcUtil.close()` 单 try 关闭可能漏关连接（概率极低、当前无连接池）、`updateCapacity` 仍在事务外读一次床位快照（单线程控制台无并发写者）、`checkOut` 在床位已被删除时会写入坐标全空的流水（UI 路径不可达）、5 个未被调用的预留 DAO/Service 方法（规格 §9 明确要求的方法集）、`RoomDaoImpl` 内两处「房间已住人数」SQL 写法不同（可读性优先，结果已由验收断言覆盖）、`selectBuildingsWithFreeBed` 使用 MySQL 的 `HAVING` 别名扩展（当前服务端 5.7 上已实测返回两个楼栋）。
 
 

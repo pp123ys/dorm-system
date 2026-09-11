@@ -68,7 +68,9 @@ public class StayController {
             AlignUtil.printLine(bw);
             int bedId = ScannerUtil.nextInt("请输入床位id:");
             stayService.checkIn(studentNo, bedId, LoginContext.getCurrentUser());
-            System.out.println("办理入住成功");
+            //重新查一次带出住宿位置(规格 §8.3: 入住成功后要打印住宿位置)
+            Student after = stayService.stayInfo(studentNo);
+            System.out.println("办理入住成功, 住宿位置:" + after.location());
         } catch (StayException e) {
             System.out.println(e.getMessage());
         }

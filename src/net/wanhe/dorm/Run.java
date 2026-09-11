@@ -8,6 +8,8 @@ import net.wanhe.dorm.system.StuSystem;
 import net.wanhe.dorm.system.UserSystem;
 import net.wanhe.dorm.util.ScannerUtil;
 
+import java.util.NoSuchElementException;
+
 public class Run {
 
     public static void main(String[] args) {
@@ -15,29 +17,38 @@ public class Run {
         us.run();
         boolean f = true;
         while (f) {
+            //菜单读取放在 try 外面: 输入耗尽(EOF)应当直接退出, 而不是被兜住后死循环
             int c = print();
-            switch (c) {
-                case 1:
-                    new BuildingSystem().run();
-                    break;
-                case 2:
-                    new RoomSystem().run();
-                    break;
-                case 3:
-                    new StuSystem().run();
-                    break;
-                case 4:
-                    new StaySystem().run();
-                    break;
-                case 5:
-                    new StatSystem().run();
-                    break;
-                case 6:
-                    f = false;
-                    System.out.println("谢谢使用");
-                    break;
-                default:
-                    System.out.println("请选择正确的选项");
+            try {
+                switch (c) {
+                    case 1:
+                        new BuildingSystem().run();
+                        break;
+                    case 2:
+                        new RoomSystem().run();
+                        break;
+                    case 3:
+                        new StuSystem().run();
+                        break;
+                    case 4:
+                        new StaySystem().run();
+                        break;
+                    case 5:
+                        new StatSystem().run();
+                        break;
+                    case 6:
+                        f = false;
+                        System.out.println("谢谢使用");
+                        break;
+                    default:
+                        System.out.println("请选择正确的选项");
+                }
+            } catch (NoSuchElementException e) {
+                //输入耗尽: 直接抛出, 让脚本类验收能立刻失败(避免掩盖"脚本行数不够")
+                throw e;
+            } catch (RuntimeException e) {
+                //兜底: 数据库/DAO 等运行时故障只提示并回到菜单, 不让整个程序崩掉
+                System.out.println("操作失败:" + e.getMessage());
             }
         }
     }

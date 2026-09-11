@@ -460,7 +460,8 @@ public static void printLine(int[] widths)     // 分隔线, 每列宽度 = 列�
 | 更新 | `run.bat`：主类改为 `net.wanhe.dorm.Run` |
 | 重写 | `db/schema.sql`：建库 + 6 张表 + 示例数据 |
 | 重写 | `test_input.txt`：覆盖全流程与反例的自动化输入脚本 |
-| 不动 | `lib/mysql-connector-java-8.0.30.jar`、`edusystem.iml`（模块名与库引用保持可用） |
+| 不动 | `lib/mysql-connector-java-8.0.30.jar`（驱动保持原样） |
+| 删除 | `edusystem.iml`（**交付前经用户确认删除**：该文件是旧布局遗留、IDEA 的 `.idea/modules.xml` 已不再引用它，属孤儿文件；删除后命令行构建与验收零影响，本机 IDEA 仍使用 `.idea/edusystem.iml`） |
 
 `.class` 编译产物不入库、不保留在 `src` 下。
 
@@ -511,5 +512,5 @@ public static void printLine(int[] widths)     // 分隔线, 每列宽度 = 列�
 ## 14. 范围外但与本次相关的已知问题
 
 - 现有 `JdbcUtil` 把账号密码硬编码在源码中——本次**不改**（属于既有风格，改动会偏离「贴近现有项目」的目标），但已知这是安全隐患。
-- `edusystem.iml` 声明 JDK 1.8 与本机 JDK 21 不符——本次**不改** `.iml`，只用脚本构建。
+- `edusystem.iml` 曾声明 JDK 1.8 与本机 JDK 21 不符（且 IDEA 实际读的是 `.idea/misc.xml` 的 `project-jdk-name`）——交付前已按用户决定**删除该孤儿文件**，仓库不再携带 IDE 配置；IDE 导入步骤写在 `README.md`「用 IDEA 打开」一节。
 - 现有库中还残留 `exam`、`filemanager` 等其他库，与本次改造无关，不动。

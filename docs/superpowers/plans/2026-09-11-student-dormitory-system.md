@@ -99,7 +99,7 @@
 
 ### 保留
 
-`lib/mysql-connector-java-8.0.30.jar`、`edusystem.iml`、`data-backup-0908/`（留在磁盘，加进 `.gitignore`，待用户确认后再删）
+`lib/mysql-connector-java-8.0.30.jar`、`data-backup-0908/`（留在磁盘，加进 `.gitignore`，待用户确认后再删）；`edusystem.iml` 已在交付前按用户确认删除（旧布局遗留、IDEA 的 `.idea/modules.xml` 已不引用它，属孤儿文件）
 
 ---
 
@@ -5625,8 +5625,8 @@ git commit -m "test: 全流程验收脚本(含16个反例)与数据一致性复�
 
 向用户报告并询问两件事（**不要自己决定**）：
 
-1. `data-backup-0908/`（旧 Java 序列化数据快照）现在还有没有用？确认后可删除。
-2. `edusystem.iml` 里声明的 JDK 1.8 与本机 JDK 21 不符，是否要顺手改成 21 或直接删掉这个 IDEA 模块文件。
+1. `data-backup-0908/`（旧 Java 序列化数据快照）现在还有没有用？确认后可删除。→ **用户尚未答复，文件保留在磁盘（已 gitignore），未删除。**
+2. `edusystem.iml` 里声明的 JDK 1.8 与本机 JDK 21 不符，是否要顺手改成 21 或直接删掉这个 IDEA 模块文件。→ **用户选择删除。** 已 `git rm` 并由 `README.md`「用 IDEA 打开」一节给出导入的 4 步（Open 目录 → 选 JDK 21 → 标记 `src` 为 Sources Root → 加 `lib` 下的驱动 jar）。结论依据：`edusystem.iml` 是旧布局遗留的孤儿文件，IDEA 实际加载的是 `.idea/edusystem.iml`（`modules.xml` 指向它），而命令行构建/验收完全不读 `.iml`。
 
 ---
 

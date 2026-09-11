@@ -58,6 +58,21 @@ Get-Content out\acceptance.log -Encoding UTF8
 `docs/superpowers/plans/2026-09-11-student-dormitory-system.md` 的 Task 11。
 按模块拆分的验收脚本见 `test-inputs/README.md`。
 
+## 用 IDEA 打开（可选，不影响命令行构建）
+
+本项目是**纯脚本工程**：`build.bat` / `run.bat` 用 `javac` / `java` 直接编译运行，不依赖任何 IDE 配置，
+仓库里也不带 `.iml`（旧布局遗留的 `edusystem.iml` 已删除，它当时已不被 IDEA 引用）。
+需要 IDE 断点调试时按下面 4 步导入即可（IDEA 会自己生成配置，不需要仓库提供）：
+
+1. `File → Open`，选项目根目录 `D:\text\edusystem`
+2. `File → Project Structure → Project` → SDK 选本机 **JDK 21**（Language level 选 8 也可以，源码只用了 Java 8 语法）
+3. 右键 `src` → `Mark Directory as → Sources Root`
+4. `Project Structure → Libraries → + → Java` → 选 `lib/mysql-connector-java-8.0.30.jar`
+
+之后可直接在 IDEA 里运行 `net.wanhe.dorm.Run`。注意 IDEA 自己的编译输出目录与 `net/` 无关，
+两边互不干扰（`net/`、`out/`、`*.class`、`.idea/` 都已 gitignore）；
+控制台运行仍要按上面的「运行」与「验收」两节操作。
+
 ## 目录结构
 
 ```
@@ -94,4 +109,4 @@ data-backup-0908/            改造前的旧序列化数据快照（保留在磁
 - 换宿用「退住 + 入住」两步完成，没有独立换宿菜单
 - 不含违纪扣分、宿舍检查、报修、值日等扩展模块
 - 数据库账号密码硬编码在 `JdbcUtil.java`（教学项目取舍，便于零配置运行）
-- `edusystem.iml` 里声明的是 JDK 1.8，与实际运行所需的 JDK 18+（编码参数）不符，尚未改动
+- 仓库不含 IDE 配置（`.iml` 已删除、`.idea/` 被 gitignore）：命令行构建完全不受影响，IDE 导入步骤见上文

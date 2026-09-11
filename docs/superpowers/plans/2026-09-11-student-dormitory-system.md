@@ -36,6 +36,7 @@
 8. **验证命令统一用 `cmd /c` 做输入重定向**（PowerShell 不支持 `<`），日志用 `Get-Content -Encoding UTF8` 读，否则中文会因默认 ANSI 编码显示成乱码。
 9. **SQL 校验命令前置一行** `$env:MYSQL_PWD="123456"`，然后 `mysql --host=localhost --user=root --default-character-set=utf8mb4 --database=rg01 --execute="..."`。
 10. **每个任务结束都要提交**（`git add -A` + `git commit`）。若 `git commit` 报 "Please tell me who you are"，先执行 Task 1 的 Step 3 配置身份。
+11. **Service 层必须给自由文本输入按列长度封顶**（楼栋名 ≤50、房间号 ≤20、学生姓名 ≤50、电话 ≤20、备注 ≤100，对应 `db/schema.sql` 的列定义）。超长输入若直达 MySQL 会抛 `Data too long` → 包成未捕获的 `RuntimeException` 直接崩掉程序（Task 6 质量审查发现）。Controller 的表格展示对长文本用 `AlignUtil.truncate` 收口。
 
 ### 各模块定位用的键（全局统一，避免脚本写错）
 
@@ -607,6 +608,29 @@ public class AlignUtil {
             sb.append(' ');
         }
         return sb.toString();
+    }
+
+    /*
+     * 按显示宽度截断: 超过 w 的末尾用 "…" 收口, 避免长文本把表格撑错位
+     */
+    public static String truncate(String s, int w) {
+        if (s == null) {
+            return "";
+        }
+        if (width(s) <= w) {
+            return s;
+        }
+        StringBuilder sb = new StringBuilder();
+        int used = 0;
+        for (int i = 0; i < s.length(); i++) {
+            int cw = isFullWidth(s.charAt(i)) ? 2 : 1;
+            if (used + cw > w - 2) {
+                break;
+            }
+            sb.append(s.charAt(i));
+            used += cw;
+        }
+        return sb + "…";
     }
 
     /*
@@ -1979,6 +2003,7 @@ public class BuildingServiceImpl implements BuildingService {
         checkName(building.getName());
         checkSex(building.getSex());
         checkFloors(building.getFloors());
+        checkRemark(building.getRemark());
         if (buildingDao.selectByName(building.getName()) != null) {
             throw new BuildingException("该楼栋名称已存在");
         }
@@ -1994,6 +2019,7 @@ public class BuildingServiceImpl implements BuildingService {
         checkName(building.getName());
         checkSex(building.getSex());
         checkFloors(building.getFloors());
+        checkRemark(building.getRemark());
         Building sameName = buildingDao.selectByName(building.getName());
         if (sameName != null && sameName.getId() != building.getId()) {
             throw new BuildingException("该楼栋名称已存在");
@@ -2014,6 +2040,9 @@ public class BuildingServiceImpl implements BuildingService {
         if (name == null || name.trim().isEmpty()) {
             throw new BuildingException("楼栋名称不能为空");
         }
+        if (name.length() > 50) {
+            throw new BuildingException("楼栋名称不能超过50个字符");
+        }
     }
 
     private void checkSex(String sex) throws BuildingException {
@@ -2025,6 +2054,12 @@ public class BuildingServiceImpl implements BuildingService {
     private void checkFloors(int floors) throws BuildingException {
         if (floors < 1) {
             throw new BuildingException("楼层数必须大于0");
+        }
+    }
+
+    private void checkRemark(String remark) throws BuildingException {
+        if (remark != null && remark.length() > 100) {
+            throw new BuildingException("备注不能超过100个字符");
         }
     }
 }
@@ -2067,17 +2102,17 @@ public class BuildingController {
             System.out.println("暂无楼栋数据");
             return;
         }
-        int[] w = {6, 12, 6, 6, 16};
+        int[] w = {8, 12, 6, 6, 16};
         AlignUtil.printLine(w);
         AlignUtil.printRow(new String[]{"楼栋id", "楼栋名称", "类型", "楼层", "备注"}, w);
         AlignUtil.printLine(w);
         for (Building b : list) {
             AlignUtil.printRow(new String[]{
                     String.valueOf(b.getId()),
-                    b.getName(),
+                    AlignUtil.truncate(b.getName(), 12),
                     b.getSex(),
                     String.valueOf(b.getFloors()),
-                    b.getRemark() == null ? "" : b.getRemark()}, w);
+                    AlignUtil.truncate(b.getRemark() == null ? "" : b.getRemark(), 16)}, w);
         }
         AlignUtil.printLine(w);
     }
@@ -3039,6 +3074,9 @@ public class RoomServiceImpl implements RoomService {
         if (roomNo == null || roomNo.trim().isEmpty()) {
             throw new RoomException("房间号不能为空");
         }
+        if (roomNo.length() > 20) {
+            throw new RoomException("房间号不能超过20个字符");
+        }
     }
 
     private void checkCapacity(int capacity) throws RoomException {
@@ -3769,6 +3807,7 @@ public class StuServiceImpl implements StuService {
         checkName(student.getName());
         checkSex(student.getSex());
         checkAge(student.getAge());
+        checkPhone(student.getPhone());
         if (stuDao.selectByNo(student.getNo()) != null) {
             throw new StuException("该学号已存在");
         }
@@ -3784,6 +3823,7 @@ public class StuServiceImpl implements StuService {
         checkName(student.getName());
         checkSex(student.getSex());
         checkAge(student.getAge());
+        checkPhone(student.getPhone());
         stuDao.update(student);
     }
 
@@ -3803,6 +3843,9 @@ public class StuServiceImpl implements StuService {
         if (name == null || name.trim().isEmpty()) {
             throw new StuException("姓名不能为空");
         }
+        if (name.length() > 50) {
+            throw new StuException("姓名不能超过50个字符");
+        }
     }
 
     private void checkSex(String sex) throws StuException {
@@ -3814,6 +3857,12 @@ public class StuServiceImpl implements StuService {
     private void checkAge(Integer age) throws StuException {
         if (age != null && (age < 10 || age > 100)) {
             throw new StuException("年龄需在10~100之间");
+        }
+    }
+
+    private void checkPhone(String phone) throws StuException {
+        if (phone != null && phone.length() > 20) {
+            throw new StuException("电话不能超过20个字符");
         }
     }
 }

@@ -45,6 +45,29 @@ public class AlignUtil {
     }
 
     /*
+     * 按显示宽度截断: 超过 w 的末尾用 "…" 收口, 避免长文本把表格撑错位
+     */
+    public static String truncate(String s, int w) {
+        if (s == null) {
+            return "";
+        }
+        if (width(s) <= w) {
+            return s;
+        }
+        StringBuilder sb = new StringBuilder();
+        int used = 0;
+        for (int i = 0; i < s.length(); i++) {
+            int cw = isFullWidth(s.charAt(i)) ? 2 : 1;
+            if (used + cw > w - 2) {
+                break;
+            }
+            sb.append(s.charAt(i));
+            used += cw;
+        }
+        return sb + "…";
+    }
+
+    /*
      * 打印一行表格: 每列 "| " + 补齐内容 + " ", 末尾再补一个 "|"
      */
     public static void printRow(String[] cells, int[] widths) {

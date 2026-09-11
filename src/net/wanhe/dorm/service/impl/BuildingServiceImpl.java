@@ -35,6 +35,7 @@ public class BuildingServiceImpl implements BuildingService {
         checkName(building.getName());
         checkSex(building.getSex());
         checkFloors(building.getFloors());
+        checkRemark(building.getRemark());
         if (buildingDao.selectByName(building.getName()) != null) {
             throw new BuildingException("该楼栋名称已存在");
         }
@@ -50,6 +51,7 @@ public class BuildingServiceImpl implements BuildingService {
         checkName(building.getName());
         checkSex(building.getSex());
         checkFloors(building.getFloors());
+        checkRemark(building.getRemark());
         Building sameName = buildingDao.selectByName(building.getName());
         if (sameName != null && sameName.getId() != building.getId()) {
             throw new BuildingException("该楼栋名称已存在");
@@ -70,6 +72,9 @@ public class BuildingServiceImpl implements BuildingService {
         if (name == null || name.trim().isEmpty()) {
             throw new BuildingException("楼栋名称不能为空");
         }
+        if (name.length() > 50) {
+            throw new BuildingException("楼栋名称不能超过50个字符");
+        }
     }
 
     private void checkSex(String sex) throws BuildingException {
@@ -81,6 +86,12 @@ public class BuildingServiceImpl implements BuildingService {
     private void checkFloors(int floors) throws BuildingException {
         if (floors < 1) {
             throw new BuildingException("楼层数必须大于0");
+        }
+    }
+
+    private void checkRemark(String remark) throws BuildingException {
+        if (remark != null && remark.length() > 100) {
+            throw new BuildingException("备注不能超过100个字符");
         }
     }
 }

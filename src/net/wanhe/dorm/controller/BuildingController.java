@@ -32,17 +32,17 @@ public class BuildingController {
             System.out.println("暂无楼栋数据");
             return;
         }
-        int[] w = {6, 12, 6, 6, 16};
+        int[] w = {8, 12, 6, 6, 16};
         AlignUtil.printLine(w);
         AlignUtil.printRow(new String[]{"楼栋id", "楼栋名称", "类型", "楼层", "备注"}, w);
         AlignUtil.printLine(w);
         for (Building b : list) {
             AlignUtil.printRow(new String[]{
                     String.valueOf(b.getId()),
-                    b.getName(),
+                    AlignUtil.truncate(b.getName(), 12),
                     b.getSex(),
                     String.valueOf(b.getFloors()),
-                    b.getRemark() == null ? "" : b.getRemark()}, w);
+                    AlignUtil.truncate(b.getRemark() == null ? "" : b.getRemark(), 16)}, w);
         }
         AlignUtil.printLine(w);
     }

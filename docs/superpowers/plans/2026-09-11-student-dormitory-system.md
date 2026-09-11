@@ -4681,7 +4681,7 @@ public class StayController {
             for (Building b : buildings) {
                 AlignUtil.printRow(new String[]{
                         String.valueOf(b.getId()),
-                        b.getName(),
+                        AlignUtil.truncate(b.getName(), 12),
                         b.getSex(),
                         String.valueOf(b.getFreeCount())}, w);
             }
@@ -4699,7 +4699,7 @@ public class StayController {
             for (Bed b : beds) {
                 AlignUtil.printRow(new String[]{
                         String.valueOf(b.getId()),
-                        b.getRoomNo(),
+                        AlignUtil.truncate(b.getRoomNo(), 10),
                         String.valueOf(b.getBedNo())}, bw);
             }
             AlignUtil.printLine(bw);
@@ -5070,7 +5070,7 @@ public class StatController {
             String rate = b.getBedCount() == 0 ? "0%" : (b.getOccupiedCount() * 100 / b.getBedCount()) + "%";
             AlignUtil.printRow(new String[]{
                     String.valueOf(b.getId()),
-                    b.getName(),
+                    AlignUtil.truncate(b.getName(), 12),
                     b.getSex(),
                     String.valueOf(b.getRoomCount()),
                     String.valueOf(b.getBedCount()),
@@ -5099,9 +5099,9 @@ public class StatController {
             for (Student s : list) {
                 AlignUtil.printRow(new String[]{
                         String.valueOf(s.getNo()),
-                        s.getName(),
+                        AlignUtil.truncate(s.getName(), 10),
                         s.getSex(),
-                        s.getPhone() == null ? "" : s.getPhone()}, w);
+                        AlignUtil.truncate(s.getPhone() == null ? "" : s.getPhone(), 16)}, w);
             }
             AlignUtil.printLine(w);
         } catch (RoomException e) {
@@ -5128,8 +5128,8 @@ public class StatController {
         for (Bed b : list) {
             AlignUtil.printRow(new String[]{
                     String.valueOf(b.getId()),
-                    b.getBuildingName(),
-                    b.getRoomNo(),
+                    AlignUtil.truncate(b.getBuildingName(), 12),
+                    AlignUtil.truncate(b.getRoomNo(), 10),
                     String.valueOf(b.getBedNo())}, w);
         }
         AlignUtil.printLine(w);
@@ -5172,10 +5172,10 @@ public class StatController {
             AlignUtil.printRow(new String[]{
                     c.getCreateTime() == null ? "" : TIME.format(c.getCreateTime()),
                     String.valueOf(c.getStudentNo()),
-                    c.getStudentName(),
+                    AlignUtil.truncate(c.getStudentName(), 10),
                     c.getAction(),
-                    c.location(),
-                    c.getOperator()}, w);
+                    AlignUtil.truncate(c.location(), 18),
+                    AlignUtil.truncate(c.getOperator(), 10)}, w);
         }
         AlignUtil.printLine(w);
     }

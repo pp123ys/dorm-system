@@ -44,7 +44,7 @@ public class StayController {
             for (Building b : buildings) {
                 AlignUtil.printRow(new String[]{
                         String.valueOf(b.getId()),
-                        b.getName(),
+                        AlignUtil.truncate(b.getName(), 12),
                         b.getSex(),
                         String.valueOf(b.getFreeCount())}, w);
             }
@@ -62,7 +62,7 @@ public class StayController {
             for (Bed b : beds) {
                 AlignUtil.printRow(new String[]{
                         String.valueOf(b.getId()),
-                        b.getRoomNo(),
+                        AlignUtil.truncate(b.getRoomNo(), 10),
                         String.valueOf(b.getBedNo())}, bw);
             }
             AlignUtil.printLine(bw);

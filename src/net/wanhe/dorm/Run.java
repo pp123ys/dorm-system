@@ -2,6 +2,7 @@ package net.wanhe.dorm;
 
 import net.wanhe.dorm.system.BuildingSystem;
 import net.wanhe.dorm.system.RoomSystem;
+import net.wanhe.dorm.system.StatSystem;
 import net.wanhe.dorm.system.StaySystem;
 import net.wanhe.dorm.system.StuSystem;
 import net.wanhe.dorm.system.UserSystem;
@@ -29,7 +30,7 @@ public class Run {
                     new StaySystem().run();
                     break;
                 case 5:
-                    System.out.println("该功能尚未实现");
+                    new StatSystem().run();
                     break;
                 case 6:
                     f = false;

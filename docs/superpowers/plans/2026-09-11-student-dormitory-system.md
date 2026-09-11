@@ -188,7 +188,6 @@ CREATE TABLE IF NOT EXISTS t_user (
 -- ============ 清理旧结构与旧表 ============
 DROP TABLE IF EXISTS t_clazz;
 DROP TABLE IF EXISTS t_checkin;
-DROP TABLE IF EXISTS t_student_new;
 DROP TABLE IF EXISTS t_student;
 DROP TABLE IF EXISTS t_bed;
 DROP TABLE IF EXISTS t_room;
@@ -250,8 +249,10 @@ CREATE TABLE t_checkin (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '入住退住流水表';
 
 -- ============ 初始化数据 ============
--- 管理员 admin / 123456
-INSERT INTO t_user (login_name, password) VALUES ('admin', '123456');
+-- 管理员 admin / 123456 (条件插入: 保证脚本可重复执行, 已有 t_user 数据时不会主键冲突)
+INSERT INTO t_user (login_name, password)
+SELECT 'admin', '123456' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM t_user WHERE login_name = 'admin');
 
 -- 楼栋
 INSERT INTO t_building (id, name, sex, floors, remark) VALUES

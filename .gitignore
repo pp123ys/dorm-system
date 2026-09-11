@@ -12,3 +12,6 @@ filelist.txt
 
 # 改造前的旧序列化数据备份(保留在磁盘, 不入库)
 /data-backup-0908/
+
+# 根级 scratch 文件(下划线前缀约定, 如外部工具生成的 _er_diagram.png / _img_server.js)
+/_*

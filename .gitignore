@@ -5,10 +5,10 @@ filelist.txt
 
 # 运行日志与输出
 *.log
-out/
+/out/
 
 # IDE
 .idea/
 
 # 改造前的旧序列化数据备份(保留在磁盘, 不入库)
-data-backup-0908/
+/data-backup-0908/

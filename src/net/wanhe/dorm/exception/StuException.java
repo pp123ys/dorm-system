@@ -1,6 +1,6 @@
-package net.wanhe.edusystem.exception;
+package net.wanhe.dorm.exception;
 
-public class StuException extends Exception {
+public class StuException extends Throwable {
 
     public StuException() {
     }

@@ -338,14 +338,18 @@ git commit -m "feat(db): 宿舍版建库建表脚本(6表+初始化数据)"
 
 - [ ] **Step 1: 删除旧包与遗留文件**
 
+注意：`WriteInput*.java` 在 `src\` 下（根目录只有 3 个 `.class`），命令按实际路径写：
+
 ```powershell
 Remove-Item -Recurse -Force src\net\wanhe\edusystem
-Remove-Item -Force WriteInput.java, WriteInput2.java, WriteInput3.java, WriteInput.class, WriteInput2.class, WriteInput3.class, run1.log, run2.log
+Remove-Item -Force src\WriteInput.java, src\WriteInput2.java, src\WriteInput3.java
 Remove-Item -Force src\WriteInput.class, src\WriteInput2.class, src\WriteInput3.class
+Remove-Item -Force WriteInput.class, WriteInput2.class, WriteInput3.class
+Remove-Item -Force run1.log, run2.log
 Remove-Item -Recurse -Force net
 ```
 
-Expected: 无报错；`Get-ChildItem src\net\wanhe` 下只剩 `dorm`（此时尚未创建，可为空）。
+Expected: 无报错；`Get-ChildItem src\net\wanhe` 下只剩 `dorm`（此时尚未创建，可为空或不存在）。
 
 - [ ] **Step 2: 写 `util/JdbcUtil.java`**
 
@@ -742,7 +746,6 @@ public class Run {
 
 ```bat
 @echo off
-chcp 65001 >nul
 cd /d %~dp0
 rem compile all java files under src\net\wanhe\dorm into net\
 dir /s /b src\net\wanhe\dorm\*.java > filelist.txt
@@ -761,9 +764,10 @@ exit /b 1
 
 注意：**去掉了 `run.bat` 内部自带的 `< test_input.txt` 重定向**，改为由调用方显式重定向，否则每个任务的验收脚本都会被这个内置重定向覆盖掉。同时补上 `stdin/stdout/stderr` 编码参数（JDK 18+ 起 `file.encoding` 不再决定标准流编码，不补会在管道重定向时中文乱码）。
 
+另外**两个 `.bat` 都不保留 `chcp 65001 >nul`**（执行中发现的 Windows 批处理陷阱）：批文件的 stdin 被重定向时，`chcp` 会把后续命令的 stdin 重置回控制台，导致 `run.bat < input.txt` 的输入被丢弃（java 立刻读到 EOF）；编码由上面的 `-D*.encoding=UTF-8` 参数保证，与 `chcp` 无关。交互式运行想看中文可在自己的控制台先执行 `chcp 65001`。
+
 ```bat
 @echo off
-chcp 65001 >nul
 cd /d %~dp0
 call build.bat
 java -Dfile.encoding=UTF-8 -Dstdin.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8 -cp ".;net;lib\*" net.wanhe.dorm.Run

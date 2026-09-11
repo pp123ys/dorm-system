@@ -1,6 +1,6 @@
-package net.wanhe.edusystem.exception;
+package net.wanhe.dorm.exception;
 
-public class UserException extends Exception {
+public class UserException extends Throwable {
 
     public UserException() {
     }

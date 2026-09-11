@@ -1,8 +1,7 @@
 @echo off
-chcp 65001 >nul
 cd /d %~dp0
-rem compile all java files under src\net\wanhe\edusystem into net\
-dir /s /b src\net\wanhe\edusystem\*.java > filelist.txt
+rem compile all java files under src\net\wanhe\dorm into net\
+dir /s /b src\net\wanhe\dorm\*.java > filelist.txt
 javac -encoding UTF-8 -cp "lib\*" -d net @filelist.txt
 if errorlevel 1 goto :failed
 del filelist.txt

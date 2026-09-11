@@ -84,10 +84,6 @@ public class RoomServiceImpl implements RoomService {
         if (newCapacity < occupied) {
             throw new RoomException("新床位数不能少于已住人数" + occupied);
         }
-        int occupiedAbove = bedDao.countOccupiedAbove(roomId, newCapacity);
-        if (occupiedAbove > 0) {
-            throw new RoomException("床号大于" + newCapacity + "的床位上有" + occupiedAbove + "名在住学生, 请先办理退住");
-        }
         List<Bed> beds = bedDao.selectByRoomId(roomId);
         try {
             JdbcUtil.beginTransaction();
@@ -104,10 +100,18 @@ public class RoomServiceImpl implements RoomService {
                     bedDao.insert(new Bed(roomId, i, "正常"));
                 }
             } else if (newCapacity < beds.size()) {
-                //只删无人住的床位, 且上面已确认床号大于新容量的床位都空着
+                //防 TOCTOU: 在事务内重查(检查与删除之间外部连接不能插入入住),
+                //只删无人住的高床号床位, 保证「床数=容量」不变量
+                int occupiedAbove = bedDao.countOccupiedAbove(roomId, newCapacity);
+                if (occupiedAbove > 0) {
+                    throw new RoomException("床号大于" + newCapacity + "的床位上有" + occupiedAbove + "名在住学生, 请先办理退住");
+                }
                 bedDao.deleteFreeBedsAbove(roomId, newCapacity);
             }
             JdbcUtil.commit();
+        } catch (RoomException e) {
+            JdbcUtil.rollbackQuietly();
+            throw e;
         } catch (RuntimeException e) {
             JdbcUtil.rollbackQuietly();
             throw new RoomException("调整房间容量失败, 已回滚", e);

@@ -45,8 +45,8 @@ public class RoomController {
             for (Room r : list) {
                 AlignUtil.printRow(new String[]{
                         String.valueOf(r.getId()),
-                        r.getBuildingName(),
-                        r.getRoomNo(),
+                        AlignUtil.truncate(r.getBuildingName(), 10),
+                        AlignUtil.truncate(r.getRoomNo(), 10),
                         String.valueOf(r.getCapacity()),
                         String.valueOf(r.getOccupiedCount()),
                         r.getStatus()}, w);
@@ -72,11 +72,12 @@ public class RoomController {
         AlignUtil.printRow(new String[]{"床位id", "床号", "状态", "在住学生"}, w);
         AlignUtil.printLine(w);
         for (Bed b : list) {
+            String occupant = b.isOccupied() ? b.getStudentName() + "(" + b.getStudentNo() + ")" : "空";
             AlignUtil.printRow(new String[]{
                     String.valueOf(b.getId()),
                     String.valueOf(b.getBedNo()),
                     b.getStatus(),
-                    b.isOccupied() ? b.getStudentName() + "(" + b.getStudentNo() + ")" : "空"}, w);
+                    AlignUtil.truncate(occupant, 16)}, w);
         }
         AlignUtil.printLine(w);
     }

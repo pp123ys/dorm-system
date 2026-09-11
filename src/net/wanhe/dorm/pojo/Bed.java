@@ -98,6 +98,8 @@ public class Bed {
     }
 
     //住宿位置文字, 用于提示信息
+    //注意: 仅对 BedDao 查询结果(LEFT JOIN 带出了 buildingName/roomNo)调用安全;
+    //服务层手工 new 出来的 Bed(如新增房间时生成床位)这些字段为 null, 不要对其调用
     public String location() {
         return buildingName + roomNo + "房" + bedNo + "床";
     }

@@ -1188,6 +1188,8 @@ public class Bed {
     }
 
     //住宿位置文字, 用于提示信息
+    //注意: 仅对 BedDao 查询结果(LEFT JOIN 带出了 buildingName/roomNo)调用安全;
+    //服务层手工 new 出来的 Bed(如新增房间时生成床位)这些字段为 null, 不要对其调用
     public String location() {
         return buildingName + roomNo + "房" + bedNo + "床";
     }
@@ -5569,7 +5571,7 @@ git commit -m "test: 全流程验收脚本(含10个反例)与数据一致性复�
 
 **类型与命名一致性检查**（跨任务核对过）：
 
-- `Bed.isOccupied()`、`Student.isCheckedIn()`、`Student.location()`、`Bed.location()`、`Room.getFreeCount()`、`Building.getFreeCount()` 在 Task 4 定义，Task 6~10 使用，签名一致。
+- 辅助方法在 Task 4 定义、Task 6~10 使用（实际调用点：`Bed.isOccupied()` 在 Task 7/9 的停床校验、`Student.isCheckedIn()` 与 `Student.location()` 在 Task 8/9/10、`Building.getFreeCount()` 在 Task 9/10；`Bed.location()` 与 `Room.getFreeCount()` 当前**无调用点**，仅为展示预留，`Bed.location()` 的 null 安全约束已写在方法注释里）：
 - DAO 方法名在「接口定义 → 实现 → service 调用」三处一致：`countOccupied`、`countOccupiedAbove`、`deleteFreeBedsAbove`、`selectByBedId`、`updateBedId`、`updateCapacity`、`selectFreeBeds(Integer)`、`selectBuildingsWithFreeBed`。
 - `JdbcUtil` 对外只有 `getConnection` / `close` / `beginTransaction` / `commit` / `rollbackQuietly`，Task 7/9 的事务模板与之匹配。
 - 菜单编号与 `switch` 分支、输入脚本顺序三处对齐（Task 7 房间子菜单 8 项、Task 3 主菜单 6 项）。

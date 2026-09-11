@@ -1,6 +1,8 @@
 package net.wanhe.dorm.service.impl;
 
 import net.wanhe.dorm.dao.BuildingDao;
+import net.wanhe.dorm.dao.RoomDao;
+import net.wanhe.dorm.dao.impl.RoomDaoImpl;
 import net.wanhe.dorm.exception.BuildingException;
 import net.wanhe.dorm.pojo.Building;
 import net.wanhe.dorm.service.BuildingService;
@@ -10,13 +12,16 @@ import java.util.List;
 public class BuildingServiceImpl implements BuildingService {
 
     private BuildingDao buildingDao;
+    private RoomDao roomDao;
 
     public BuildingServiceImpl() {
         try {
             Class c = Class.forName("net.wanhe.dorm.dao.impl.BuildingDaoImpl");
             buildingDao = (BuildingDao) c.newInstance();
+            Class c2 = Class.forName("net.wanhe.dorm.dao.impl.RoomDaoImpl");
+            roomDao = (RoomDao) c2.newInstance();
         } catch (Exception e) {
-            throw new RuntimeException("通过反射创建BuildingDao失败", e);
+            throw new RuntimeException("通过反射创建Dao失败", e);
         }
     }
 
@@ -64,6 +69,10 @@ public class BuildingServiceImpl implements BuildingService {
         Building old = buildingDao.selectById(id);
         if (old == null) {
             throw new BuildingException("该楼栋不存在");
+        }
+        int rooms = roomDao.countByBuildingId(id);
+        if (rooms > 0) {
+            throw new BuildingException("该楼栋下还有" + rooms + "个房间, 请先删除房间");
         }
         buildingDao.delete(id);
     }

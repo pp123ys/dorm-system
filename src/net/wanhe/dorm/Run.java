@@ -1,6 +1,7 @@
 package net.wanhe.dorm;
 
 import net.wanhe.dorm.system.BuildingSystem;
+import net.wanhe.dorm.system.RoomSystem;
 import net.wanhe.dorm.system.UserSystem;
 import net.wanhe.dorm.util.ScannerUtil;
 
@@ -17,7 +18,7 @@ public class Run {
                     new BuildingSystem().run();
                     break;
                 case 2:
-                    System.out.println("该功能尚未实现");
+                    new RoomSystem().run();
                     break;
                 case 3:
                     System.out.println("该功能尚未实现");

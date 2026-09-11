@@ -3,6 +3,7 @@
 
 CREATE DATABASE IF NOT EXISTS rg01 DEFAULT CHARSET utf8mb4;
 USE rg01;
+SET NAMES utf8mb4;
 
 -- ============ 管理员表 (沿用原有结构) ============
 CREATE TABLE IF NOT EXISTS t_user (

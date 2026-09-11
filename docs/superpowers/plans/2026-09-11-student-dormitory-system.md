@@ -177,6 +177,7 @@ Expected: 出现一条 `chore: 改造前基线(教育系统控制台版)` 提交
 
 CREATE DATABASE IF NOT EXISTS rg01 DEFAULT CHARSET utf8mb4;
 USE rg01;
+SET NAMES utf8mb4;
 
 -- ============ 管理员表 (沿用原有结构) ============
 CREATE TABLE IF NOT EXISTS t_user (

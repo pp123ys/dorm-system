@@ -5493,40 +5493,49 @@ x
 
 - [ ] **Step 3: 分阶段核对期望消息**
 
-| 阶段 | 行范围（大致） | 关键期望消息 |
+约定：**阶段的第一行是进入该阶段主菜单的那一行**（例如楼栋阶段从主菜单选 `1` 开始）。行号已逐行核对，合计 161。
+
+| 阶段 | 行号 | 关键期望消息 |
 |---|---|---|
-| A 登录 | `admin wrong admin 123456 abc 1` | `用户名或密码错误` → `请重新登录` → `登录成功` → `请输入数字`（字母当数字被拦下重试） |
-| B 楼栋 | `1 …5` | `新增成功`、`该楼栋名称已存在`、`请输入数字`、`修改成功`、`该楼栋不存在`、`删除成功`、`该楼栋下还有3个房间, 请先删除房间` |
-| C 房间床位 | `2 …8` | `新增成功, 已自动生成4个床位`、`该楼栋下已存在房间:104`、两次 `调整成功`、`操作成功` |
-| D 学生 | `3 …5` | 两次 `新增成功`、`该学号已存在`、`修改成功` |
-| E 入住退住 | `4 …3` | 4 个 `办理入住成功`（张三/李四/王五/孙悟空住满 101）、`该房间已住满`、`该床位已停用, 不能分配`、`性别与楼栋不符, 不能入住`、第 5 个 `办理入住成功`（赵敏）、`该学生已入住1号楼101房1床, 请先办理退住`、`该学生当前未入住, 无需退住`、`办理退住成功`（王五） |
-| F 容量与删除保护 | `2 …8` | `新床位数不能少于已住人数3`、`床号大于3的床位上有1名在住学生, 请先办理退住`、`调整成功`、`房间内还有3名在住学生, 不能删除`、`删除成功`（删掉空房间 104） |
-| G 在住学生删除保护 + 退住 | `3 …3` | `该学生正在1号楼101房1床, 请先办理退住`、`办理退住成功`（张三） |
-| H 查询统计 | `5 …6 6` | `空床位数:22`、`流水条数:7`、`住宿位置:2号楼201房1床` |
+| A 登录 | 1–5 | `用户名或密码错误` → `请重新登录` → `登录成功` → `请输入数字`（字母当数字被拦下重试） |
+| B 楼栋 | 6–36 | `新增成功`、`该楼栋名称已存在`、`请输入数字`、`修改成功`、`该楼栋不存在`、`删除成功`、`该楼栋下还有3个房间, 请先删除房间` |
+| C 房间床位 | 37–59 | `新增成功, 已自动生成4个床位`、`该楼栋下已存在房间:104`、两次 `调整成功`、两次 `操作成功` |
+| D 学生 | 60–86 | 两次 `新增成功`、`该学号已存在`、`修改成功` |
+| E 入住退住 | 87–126 | 4 个 `办理入住成功`（张三/李四/王五/孙悟空住满 101）、`该房间已住满`、`该床位已停用, 不能分配`、`性别与楼栋不符, 不能入住`、第 5 个 `办理入住成功`（赵敏）、`该学生已入住1号楼101房1床, 请先办理退住`、`该学生当前未入住, 无需退住`、`办理退住成功`（王五） |
+| F 容量与删除保护 | 127–141 | `新床位数不能少于已住人数3`、`床号大于3的床位上有1名在住学生, 请先办理退住`、`调整成功`、`房间内还有3名在住学生, 不能删除`、`删除成功`（删掉空房间 104） |
+| G 在住学生删除保护 + 退住 | 142–149 | `该学生正在1号楼101房1床, 请先办理退住`、`办理退住成功`（张三） |
+| H 查询统计 | 150–161 | `空床位数:22`、`流水条数:7`、`住宿位置:2号楼201房1床` |
+
+跨阶段依赖（改动脚本时必须一起考虑）：阶段 C 停用的**床位 26** 是阶段 E「该床位已停用」的触发点；阶段 C 新建、阶段 F 删除的**房间 104** 与阶段 F 的 **101 扩到 5 床**共同保证终态 `t_bed 行数 == sum(capacity) == 25`；硬编码 id（床位 2/4/13、房间 7、楼栋 9999）依赖示例数据的固定 id。同样的说明也写在 `test-inputs/README.md`。
 
 - [ ] **Step 4: 跑完整验收**
 
+注意两点，否则「无异常」会因为日志根本不存在而假通过：
+1. `out/` 不在版本库里，新克隆的仓库没有这个目录，重定向会直接失败；
+2. `Get-Content` 读不存在的文件不报错、返回空，`-> 0 命中` 会被误读成通过。
+
 ```powershell
+New-Item -ItemType Directory -Force out | Out-Null
 cmd /c "run.bat < test_input.txt > out\acceptance.log 2>&1"
-Get-Content out\acceptance.log -Encoding UTF8
-Get-Content out\acceptance.log -Encoding UTF8 | Select-String -Pattern "Exception" -SimpleMatch
-Get-Content out\acceptance.log -Encoding UTF8 | Select-String -Pattern "该功能尚未实现" -SimpleMatch
-Get-Content out\acceptance.log -Encoding UTF8 | Select-String -Pattern "build failed" -SimpleMatch
+if (-not (Test-Path out\acceptance.log)) { throw "验收日志未生成, 检查 out\ 目录与重定向" }
+Get-Content out\acceptance.log -Encoding UTF8 | Select-String -Pattern "登录成功","谢谢使用" -SimpleMatch
+Get-Content out\acceptance.log -Encoding UTF8 | Select-String -Pattern "Exception","该功能尚未实现","build failed" -SimpleMatch
 ```
 
-Expected: 第三次命令（`Exception`）**无命中**（程序没有崩溃、没有异常堆栈）；后两条也无命中。
+Expected: 第二条命令必须命中 `登录成功` 与 `谢谢使用`（**先证有，再证无**）；第三条命令三个模式都**无命中**（程序没崩、占位文案已全部替换、编译没失败）。
 
-- [ ] **Step 5: 逐条确认 16 个反例都出现**
+- [ ] **Step 5: 逐条确认 16 个反例都出现（有 0 命中就抛错，不靠肉眼）**
 
 ```powershell
 $log = "out\acceptance.log"
 "用户名或密码错误","请输入数字","该楼栋名称已存在","该楼栋不存在","该楼栋下还有3个房间, 请先删除房间","该楼栋下已存在房间:104","该学号已存在","该学生已入住1号楼101房1床, 请先办理退住","该学生当前未入住, 无需退住","该房间已住满","该床位已停用, 不能分配","性别与楼栋不符, 不能入住","新床位数不能少于已住人数3","床号大于3的床位上有1名在住学生, 请先办理退住","房间内还有3名在住学生, 不能删除","该学生正在1号楼101房1床, 请先办理退住" | ForEach-Object {
     $hit = (Get-Content $log -Encoding UTF8 | Select-String -Pattern $_ -SimpleMatch).Count
+    if ($hit -eq 0) { throw "反例未命中: $_" }
     "$_  =>  $hit"
 }
 ```
 
-Expected: 每一行都 `=> 1`（或更多），没有任何一行是 `=> 0`（共 16 条反例）。
+Expected: 打印 16 行，每行 `=> 1` 或更多；任何一条 0 命中都会直接抛错（脚本中止，不会静默通过）。
 
 - [ ] **Step 6: SQL 复核终态**
 
@@ -5570,6 +5579,30 @@ mysql --host=localhost --user=root --default-character-set=utf8mb4 --database=rg
 ```
 
 Expected: 两条都返回空结果集 —— 没有床位被两名学生同时占用，也没有「找不到所属房间」的孤儿床位。
+（`group by ... having c > 1` 在 `uk_student_bed` 唯一索引存在时天然为空，它是「索引被误删」的回归护栏；`ghost_beds` 才是真正的孤儿检查。）
+
+- [ ] **Step 8b: SQL 复核「流水位置与当时状态一致」（规格 §12.4 的最后一句）**
+
+```powershell
+$env:MYSQL_PWD="123456"
+mysql --host=localhost --user=root --default-character-set=utf8mb4 --database=rg01 --execute="select s.no, s.name, c.building_name, c.room_no, c.bed_no, b.name as cur_building, r.room_no as cur_room, bd.bed_no as cur_bed from t_student s join t_checkin c on c.student_no = s.no and c.action = '入住' join t_bed bd on bd.id = s.bed_id join t_room r on r.id = bd.room_id join t_building b on b.id = r.building_id where c.id = (select max(c2.id) from t_checkin c2 where c2.student_no = s.no); select count(*) as rows_with_null_location from t_checkin where building_name is null or room_no is null or bed_no is null;"
+```
+
+Expected: 第一条返回在住的 3 名学生（李四/孙悟空/赵敏），且 `building_name/room_no/bed_no` 与 `cur_building/cur_room/cur_bed` 逐行相等（流水记的就是当时的真实位置）；第二条返回 `0`（正常流程不会写出空坐标的流水）。
+
+- [ ] **Step 8c: 复核「脚本可重复执行」（规格 §12.5）**
+
+```powershell
+$env:MYSQL_PWD="123456"
+cmd /c "mysql --host=localhost --user=root --default-character-set=utf8mb4 < db\schema.sql"
+cmd /c "run.bat < test_input.txt > out\acceptance2.log 2>&1"
+$a = Get-Content out\acceptance.log -Encoding UTF8
+$b = Get-Content out\acceptance2.log -Encoding UTF8
+(Compare-Object $a $b | Measure-Object).Count
+```
+
+Expected: 差异行数约 14 行，且**全部**是流水表里的时间戳（形如 `2026-09-11 22:24:37`）；其余输出逐行一致，16 个反例与 SQL 终态断言全部复现。
+**不要**断言两轮日志逐字节相同 —— `t_checkin.create_time` 由数据库默认值生成，必然不同。
 
 - [ ] **Step 9: 交付检查**
 
@@ -5579,7 +5612,7 @@ git status --short
 Get-ChildItem -Recurse -Filter *.class src | Measure-Object | Select-Object -ExpandProperty Count
 ```
 
-Expected: `build ok`；`git status --short` 只剩未跟踪的 `out/`、`test-inputs/`（若已提交则干净）；`src` 下 `.class` 数量为 **0**（编译产物只出现在 `net/`，且已被 `.gitignore` 忽略）。
+Expected: `build ok`；`git status --short` 为空（`out/`、`net/` 已被 `.gitignore` 忽略，`test-inputs/` 与 `test_input.txt` 已提交）；`src` 下 `.class` 数量为 **0**（编译产物只出现在 `net/`）。
 
 - [ ] **Step 10: 提交**
 

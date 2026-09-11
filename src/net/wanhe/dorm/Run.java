@@ -1,10 +1,13 @@
 package net.wanhe.dorm;
 
+import net.wanhe.dorm.system.UserSystem;
 import net.wanhe.dorm.util.ScannerUtil;
 
 public class Run {
 
     public static void main(String[] args) {
+        UserSystem us = new UserSystem();
+        us.run();
         boolean f = true;
         while (f) {
             int c = print();

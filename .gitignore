@@ -7,11 +7,9 @@ filelist.txt
 *.log
 /out/
 
-# IDE
+# IDE（本机配置不入库；交付前已清掉旧的 .idea/，重开 IDEA 会重新生成）
 .idea/
+*.iml
 
-# 改造前的旧序列化数据备份(保留在磁盘, 不入库)
-/data-backup-0908/
-
-# 根级 scratch 文件(下划线前缀约定, 如外部工具生成的 _er_diagram.png / _img_server.js)
+# 根级 scratch 文件（下划线前缀约定，避免临时文件误入库）
 /_*

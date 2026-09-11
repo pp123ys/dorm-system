@@ -455,7 +455,9 @@ public static void printLine(int[] widths)     // 分隔线, 每列宽度 = 列�
 | 删除 | 根目录 `WriteInput.java`、`WriteInput2.java`、`WriteInput3.java` 及对应 3 个 `.class` |
 | 删除 | `src/WriteInput*.class`（散落的编译产物） |
 | 删除 | 历史日志 `run1.log`、`run2.log` |
-| 保留（待用户确认后再删） | `data-backup-0908/`（旧 Java 序列化数据快照，改造后无用，但先留着做回退保险） |
+| 删除 | `data-backup-0908/`（旧 Java 序列化数据快照，改造后系统已完全改用 MySQL，读不到这些文件）——**交付前经用户确认删除** |
+| 删除 | `.idea/`（本机 IDE 配置，不属于仓库；经查其中没有任何运行配置、也没有引用本项目任何类，且 SDK 仍写着 1.8、模块 sourceFolder 指向不存在的 `.idea/src`，属陈旧残留） |
+| 删除 | 根级 scratch 文件 `_er_diagram.png`、`_er_diagram_tmp.png`、`_img_server.js`（外部工具生成，非本项目产物） |
 | 更新 | `build.bat`：编译范围 `src\net\wanhe\dorm\*.java`，输出到 `net\` |
 | 更新 | `run.bat`：主类改为 `net.wanhe.dorm.Run` |
 | 重写 | `db/schema.sql`：建库 + 6 张表 + 示例数据 |

@@ -97,9 +97,39 @@
 
 `src/net/wanhe/edusystem/**`（整个旧包）、`WriteInput*.java`、根目录与 `src/` 下的 `.class`、`run1.log`、`run2.log`、`net/`（旧编译产物）
 
-### 保留
+### 保留 / 最终清理
 
-`lib/mysql-connector-java-8.0.30.jar`、`data-backup-0908/`（留在磁盘，加进 `.gitignore`，待用户确认后再删）；`edusystem.iml` 已在交付前按用户确认删除（旧布局遗留、IDEA 的 `.idea/modules.xml` 已不引用它，属孤儿文件）
+`lib/mysql-connector-java-8.0.30.jar` 保留（驱动）。
+
+**交付前按用户要求「不属于本项目的一律删除」，已清理（全部不在版本库内，删除不影响仓库内容）：**
+
+| 已删除 | 理由 |
+|---|---|
+| `edusystem.iml` | 旧布局遗留孤儿文件，IDEA 的 `.idea/modules.xml` 已不引用它（用户确认删除） |
+| `data-backup-0908/`（3 个旧序列化文件） | 改造前「教育系统」文件存储时期的数据，现系统完全走 MySQL，已读不到 |
+| `.idea/`（本机 IDE 配置） | 查证确认是陈旧残留：**没有任何运行配置、未引用本项目任何类**，SDK 仍写 1.8，模块 sourceFolder 指向不存在的 `.idea/src`，库配置还重复了一份 "lib (2)" |
+| `_er_diagram.png`、`_er_diagram_tmp.png`、`_img_server.js` | 外部工具生成的 scratch 文件，非本项目产物 |
+| `out/`（全部验收日志与过程临时脚本） | 可再生的运行产物；README 的验收步骤会自动重建该目录 |
+
+清理后 `.gitignore` 的最终内容（Task 1 / Task 3 里列出的历史版本已被本节取代：`/data-backup-0908/` 随目录删除而移除，补上 `*.iml`，`/_*` 保留为 scratch 通用规则）：
+
+```gitignore
+# 编译产物
+/net/
+*.class
+filelist.txt
+
+# 运行日志与输出
+*.log
+/out/
+
+# IDE（本机配置不入库；交付前已清掉旧的 .idea/，重开 IDEA 会重新生成）
+.idea/
+*.iml
+
+# 根级 scratch 文件（下划线前缀约定，避免临时文件误入库）
+/_*
+```
 
 ---
 
@@ -5625,7 +5655,7 @@ git commit -m "test: 全流程验收脚本(含16个反例)与数据一致性复�
 
 向用户报告并询问两件事（**不要自己决定**）：
 
-1. `data-backup-0908/`（旧 Java 序列化数据快照）现在还有没有用？确认后可删除。→ **用户尚未答复，文件保留在磁盘（已 gitignore），未删除。**
+1. `data-backup-0908/`（旧 Java 序列化数据快照）现在还有没有用？确认后可删除。→ **用户答复：不属于本项目的一律删除。** 已连同 `.idea/`、根级 scratch 文件（`_er_diagram*.png`、`_img_server.js`）、`out/` 一起清理，依据与清单见开头「保留 / 最终清理」一节。
 2. `edusystem.iml` 里声明的 JDK 1.8 与本机 JDK 21 不符，是否要顺手改成 21 或直接删掉这个 IDEA 模块文件。→ **用户选择删除。** 已 `git rm` 并由 `README.md`「用 IDEA 打开」一节给出导入的 4 步（Open 目录 → 选 JDK 21 → 标记 `src` 为 Sources Root → 加 `lib` 下的驱动 jar）。结论依据：`edusystem.iml` 是旧布局遗留的孤儿文件，IDEA 实际加载的是 `.idea/edusystem.iml`（`modules.xml` 指向它），而命令行构建/验收完全不读 `.iml`。
 
 ---

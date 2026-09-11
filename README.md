@@ -83,9 +83,12 @@ db/schema.sql                建库建表 + 示例数据（可重复执行）
 lib/                         MySQL 驱动 jar
 src/net/wanhe/dorm/          源码：Run + system/controller/service/dao/pojo/exception/util
 docs/superpowers/            设计规格与实现计划
-net/  out/                   编译产物与验收日志（均已 gitignore）
-data-backup-0908/            改造前的旧序列化数据快照（保留在磁盘，未入库）
+net/                         编译产物（build.bat 生成，已 gitignore）
+out/                         验收日志目录（首次跑验收时自动创建，已 gitignore）
 ```
+
+仓库里**只有项目本身**：不含 IDE 配置、不含改造前的旧数据快照、不含临时脚本。
+本机目录若存在 `.idea/`、`out/`、`net/`，都是可再生的本地产物，删掉不影响项目。
 
 ## 常见问题
 

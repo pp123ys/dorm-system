@@ -125,15 +125,15 @@ Expected: `Initialized empty Git repository in D:/text/edusystem/.git/`
 *.class
 filelist.txt
 
-# 运行日志与输出
+# 运行日志与输出(根锚定, 避免误伤其他深度的同名目录)
 *.log
-out/
+/out/
 
 # IDE
 .idea/
 
 # 改造前的旧序列化数据备份(保留在磁盘, 不入库)
-data-backup-0908/
+/data-backup-0908/
 ```
 
 - [ ] **Step 3: 确认提交身份**（已有全局配置的跳过）
@@ -350,6 +350,10 @@ Remove-Item -Recurse -Force net
 ```
 
 Expected: 无报错；`Get-ChildItem src\net\wanhe` 下只剩 `dorm`（此时尚未创建，可为空或不存在）。
+
+- [ ] **Step 1b: `.gitignore` 补齐锚定（编排者补充，质量审查指出）**
+
+把 `.gitignore` 里 `out/`、`data-backup-0908/` 两条改成根锚定 `/out/`、`/data-backup-0908/`（与 Task 1 修正 `/net/` 同理：未锚定的目录规则会匹配任意深度，误伤同名子目录）。
 
 - [ ] **Step 2: 写 `util/JdbcUtil.java`**
 

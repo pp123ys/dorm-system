@@ -45,7 +45,7 @@
 | MySQL 客户端 | `mysql.exe` 可用（`D:\mysql-5.7.34-winx64\...\bin`） | 验收可用 SQL 直接复核数据 |
 | 账号 | `root` / `123456` 连接成功 | 现有 `JdbcUtil` 里的连接信息无需改动 |
 | `rg01` 库 | **不存在**（现有库列表：`exam`、`filemanager`、`health_check_system`、`mingli_test`、`personality_test`、`test01`、`wanju_mall` 等，无 `rg01`） | `schema.sql` 必须自己 `CREATE DATABASE`；没有存量数据需要保留 |
-| 磁盘编码 | 控制台全链路 UTF-8（`build.bat`/`run.bat` 已有 `chcp 65001`） | 输出中文与表格对齐需自行按显示宽度处理 |
+| 磁盘编码 | 控制台全链路 UTF-8（JVM `-D*.encoding=UTF-8` 参数；`.bat` 不带 `chcp`——批文件 stdin 被重定向时 `chcp` 会重置后续命令的 stdin，见实现计划 Task 3 说明） | 输出中文与表格对齐需自行按显示宽度处理 |
 
 ## 4. 架构与包结构
 

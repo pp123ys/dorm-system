@@ -1,8 +1,8 @@
--- 学生宿舍管理系统 数据库脚本 (rg01)
+-- 寓安 · 学生宿舍管理系统 数据库脚本 (dorm_system)
 -- 服务端为 MySQL 5.7, 不使用 8.0 专属语法
 
-CREATE DATABASE IF NOT EXISTS rg01 DEFAULT CHARSET utf8mb4;
-USE rg01;
+CREATE DATABASE IF NOT EXISTS dorm_system DEFAULT CHARSET utf8mb4;
+USE dorm_system;
 SET NAMES utf8mb4;
 
 -- ============ 管理员表 (沿用原有结构) ============

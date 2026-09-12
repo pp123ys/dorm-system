@@ -1,6 +1,6 @@
-# 学生宿舍管理系统
+# 寓安 · 学生宿舍管理系统
 
-控制台版学生宿舍管理系统：Java 8 语法 + 原生 JDBC + MySQL，由原「教育系统」原地改造而来。
+控制台版「寓安 · 学生宿舍管理系统」：Java 8 语法 + 原生 JDBC + MySQL，由原「教育系统」原地改造而来。
 
 功能：管理员登录 → 楼栋管理 → 房间与床位管理（自动生成床位、扩容缩容、停用）→ 学生管理 →
 入住退住办理（8 步严格校验 + 事务 + 流水）→ 查询统计（占用概览、住宿名单、空床位、住宿信息、流水）。
@@ -16,7 +16,7 @@
 
 ## 数据库
 
-连接信息硬编码在 `src/net/wanhe/dorm/util/JdbcUtil.java`：`localhost:3306` / 库 `rg01` / `root` / `123456`。
+连接信息硬编码在 `src/net/wanhe/dormsystem/util/JdbcUtil.java`：`localhost:3306` / 库 `dorm_system` / `root` / `123456`。
 
 建库建表 + 示例数据（**可重复执行**：会 drop 并重建 5 张宿舍表并重灌示例数据，`t_user` 用条件插入保留）：
 
@@ -33,7 +33,7 @@ cmd /c "mysql --host=localhost --user=root --default-character-set=utf8mb4 < db\
 ## 编译与运行
 
 ```powershell
-.\build.bat     # 编译 src\net\wanhe\dorm 到 net\，成功输出 build ok
+.\build.bat     # 编译 src\net\wanhe\dormsystem 到 net\，成功输出 build ok
 .\run.bat       # 交互式运行（默认管理员 admin / 123456）
 ```
 
@@ -55,7 +55,7 @@ Get-Content out\acceptance.log -Encoding UTF8
 通过标准：日志中出现 `登录成功`、`谢谢使用`，且**不出现** `Exception`、`该功能尚未实现`、`build failed`。
 
 逐条断言（16 个反例的关键字、SQL 终态核对）见
-`docs/superpowers/plans/2026-09-11-student-dormitory-system.md` 的 Task 11。
+`docs/superpowers/plans/2026-09-11-dorm-system.md` 的 Task 11。
 按模块拆分的验收脚本见 `test-inputs/README.md`。
 
 ## 用 IDEA 打开（可选，不影响命令行构建）
@@ -64,27 +64,27 @@ Get-Content out\acceptance.log -Encoding UTF8
 仓库里也不带 `.iml`（旧布局遗留的 `edusystem.iml` 已删除，它当时已不被 IDEA 引用）。
 需要 IDE 断点调试时按下面 4 步导入即可（IDEA 会自己生成配置，不需要仓库提供）：
 
-1. `File → Open`，选项目根目录 `D:\text\edusystem`
+1. `File → Open`，选项目根目录 `D:\text\dorm-system`
 2. `File → Project Structure → Project` → SDK 选本机 **JDK 21**（Language level 选 8 也可以，源码只用了 Java 8 语法）
 3. 右键 `src` → `Mark Directory as → Sources Root`
 4. `Project Structure → Libraries → + → Java` → 选 `lib/mysql-connector-java-8.0.30.jar`
 
-之后可直接在 IDEA 里运行 `net.wanhe.dorm.Run`。注意 IDEA 自己的编译输出目录与 `net/` 无关，
+之后可直接在 IDEA 里运行 `net.wanhe.dormsystem.Run`。注意 IDEA 自己的编译输出目录与 `net/` 无关，
 两边互不干扰（`net/`、`out/`、`*.class`、`.idea/` 都已 gitignore）；
 控制台运行仍要按上面的「运行」与「验收」两节操作。
 
 ## 目录结构
 
 ```
-build.bat / run.bat          编译与运行脚本
-test_input.txt               全流程验收输入（161 行，8 阶段 + 16 反例）
-test-inputs/                 按模块拆分的验收输入脚本（含 README 说明）
-db/schema.sql                建库建表 + 示例数据（可重复执行）
-lib/                         MySQL 驱动 jar
-src/net/wanhe/dorm/          源码：Run + system/controller/service/dao/pojo/exception/util
-docs/superpowers/            设计规格与实现计划
-net/                         编译产物（build.bat 生成，已 gitignore）
-out/                         验收日志目录（首次跑验收时自动创建，已 gitignore）
+build.bat / run.bat              编译与运行脚本
+test_input.txt                   全流程验收输入（161 行，8 阶段 + 16 反例）
+test-inputs/                     按模块拆分的验收输入脚本（含 README 说明）
+db/schema.sql                    建库建表 + 示例数据（可重复执行）
+lib/                             MySQL 驱动 jar
+src/net/wanhe/dormsystem/        源码：Run + system/controller/service/dao/pojo/exception/util
+docs/superpowers/                设计规格与实现计划
+net/                             编译产物（build.bat 生成，已 gitignore）
+out/                             验收日志目录（首次跑验收时自动创建，已 gitignore）
 ```
 
 仓库里**只有项目本身**：不含 IDE 配置、不含改造前的旧数据快照、不含临时脚本。
@@ -102,8 +102,8 @@ out/                         验收日志目录（首次跑验收时自动创建
 
 ## 文档
 
-- 设计规格：`docs/superpowers/specs/2026-09-11-student-dormitory-system-design.md`
-- 实现计划（逐任务代码、验收命令、决策记录）：`docs/superpowers/plans/2026-09-11-student-dormitory-system.md`
+- 设计规格：`docs/superpowers/specs/2026-09-11-dorm-system-design.md`
+- 实现计划（逐任务代码、验收命令、决策记录）：`docs/superpowers/plans/2026-09-11-dorm-system.md`
 - 验收脚本说明：`test-inputs/README.md`
 
 ## 已知限制（设计阶段的有意取舍）

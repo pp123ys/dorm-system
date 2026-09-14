@@ -1,5 +1,9 @@
 -- 寓安 · 学生宿舍管理系统 数据库脚本 (dorm_system)
--- 服务端为 MySQL 5.7, 不使用 8.0 专属语法
+-- 目标服务端: 本机 MySQL 5.5.28 (最低兼容 5.5.x), 不使用 5.5 不支持的语法
+-- 注意: MySQL 5.5 的 DATETIME 不接受 CURRENT_TIMESTAMP 默认值(5.6.5 才支持),
+--       因此 t_checkin.create_time 使用 TIMESTAMP, 详见该表注释
+-- 用法: mysql -h 127.0.0.1 -uroot -p123456 --default-character-set=utf8mb4 < db\schema.sql
+-- 特性: 可重复执行(idempotent), 重复导入不会因主键/唯一键冲突而报错
 
 CREATE DATABASE IF NOT EXISTS dorm_system DEFAULT CHARSET utf8mb4;
 USE dorm_system;
@@ -72,7 +76,9 @@ CREATE TABLE t_checkin (
   room_no VARCHAR(20) COMMENT '房间号(冗余留痕)',
   bed_no INT COMMENT '床位号(冗余留痕)',
   operator VARCHAR(50) NOT NULL COMMENT '操作人登录名',
-  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间'
+  -- 必须用 TIMESTAMP: MySQL 5.5 的 DATETIME 不支持 DEFAULT CURRENT_TIMESTAMP
+  -- (该能力自 MySQL 5.6.5 才提供), 用 DATETIME 会直接 CREATE 失败(error 1067)
+  create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '入住退住流水表';
 
 -- ============ 初始化数据 ============
@@ -81,33 +87,39 @@ INSERT INTO t_user (login_name, password)
 SELECT 'admin', '123456' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM t_user WHERE login_name = 'admin');
 
--- 楼栋
-INSERT INTO t_building (id, name, sex, floors, remark) VALUES
-(1, '1号楼', '男', 6, '男生宿舍'),
-(2, '2号楼', '女', 6, '女生宿舍');
+-- 楼栋: 仅在表为空时写入默认数据(保证本脚本可重复执行)
+INSERT INTO t_building (id, name, sex, floors, remark)
+SELECT * FROM (
+  SELECT 1 AS id, '1号楼' AS name, '男' AS sex, 6 AS floors, '男生宿舍' AS remark
+  UNION ALL SELECT 2, '2号楼', '女', 6, '女生宿舍'
+) d WHERE NOT EXISTS (SELECT 1 FROM t_building);
 
 -- 房间
-INSERT INTO t_room (id, building_id, room_no, capacity, status) VALUES
-(1, 1, '101', 4, '正常'),
-(2, 1, '102', 4, '正常'),
-(3, 1, '103', 4, '正常'),
-(4, 2, '201', 4, '正常'),
-(5, 2, '202', 4, '正常'),
-(6, 2, '203', 4, '正常');
+INSERT INTO t_room (id, building_id, room_no, capacity, status)
+SELECT * FROM (
+  SELECT 1 AS id, 1 AS building_id, '101' AS room_no, 4 AS capacity, '正常' AS status
+  UNION ALL SELECT 2, 1, '102', 4, '正常'
+  UNION ALL SELECT 3, 1, '103', 4, '正常'
+  UNION ALL SELECT 4, 2, '201', 4, '正常'
+  UNION ALL SELECT 5, 2, '202', 4, '正常'
+  UNION ALL SELECT 6, 2, '203', 4, '正常'
+) d WHERE NOT EXISTS (SELECT 1 FROM t_room);
 
--- 床位: 6 间房 x 4 床
-INSERT INTO t_bed (room_id, bed_no, status) VALUES
-(1, 1, '正常'), (1, 2, '正常'), (1, 3, '正常'), (1, 4, '正常'),
-(2, 1, '正常'), (2, 2, '正常'), (2, 3, '正常'), (2, 4, '正常'),
-(3, 1, '正常'), (3, 2, '正常'), (3, 3, '正常'), (3, 4, '正常'),
-(4, 1, '正常'), (4, 2, '正常'), (4, 3, '正常'), (4, 4, '正常'),
-(5, 1, '正常'), (5, 2, '正常'), (5, 3, '正常'), (5, 4, '正常'),
-(6, 1, '正常'), (6, 2, '正常'), (6, 3, '正常'), (6, 4, '正常');
+-- 床位: 6 间房 x 4 床, 由房间推导, 避免手写 24 行
+INSERT INTO t_bed (room_id, bed_no, status)
+SELECT r.id, n.bed_no, '正常'
+FROM t_room r
+JOIN (
+  SELECT 1 AS bed_no UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4
+) n
+WHERE NOT EXISTS (SELECT 1 FROM t_bed);
 
 -- 学生: 初始全部未入住(bed_id 为 NULL), 流水表初始为空, 两者严格一致
-INSERT INTO t_student (no, name, sex, age, phone, bed_id) VALUES
-(2025001, '张三', '男', 18, '13800000001', NULL),
-(2025002, '李四', '男', 19, '13800000002', NULL),
-(2025003, '王五', '男', 20, '13800000003', NULL),
-(2025004, '赵敏', '女', 19, '13800000004', NULL),
-(2025005, '周芷', '女', 18, '13800000005', NULL);
+INSERT INTO t_student (no, name, sex, age, phone, bed_id)
+SELECT * FROM (
+  SELECT 2025001 AS no, '张三' AS name, '男' AS sex, 18 AS age, '13800000001' AS phone, NULL AS bed_id
+  UNION ALL SELECT 2025002, '李四', '男', 19, '13800000002', NULL
+  UNION ALL SELECT 2025003, '王五', '男', 20, '13800000003', NULL
+  UNION ALL SELECT 2025004, '赵敏', '女', 19, '13800000004', NULL
+  UNION ALL SELECT 2025005, '周芷', '女', 18, '13800000005', NULL
+) d WHERE NOT EXISTS (SELECT 1 FROM t_student);

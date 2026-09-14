@@ -1,5 +1,0 @@
-admin
-wrong
-admin
-123456
-6

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.18</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>net.wanhe</groupId>
+    <artifactId>dorm-web</artifactId>
+    <version>1.0.0</version>
+    <name>dorm-web</name>
+    <description>寓安 · 学生宿舍管理系统 Web 版（前后端分离后端）</description>
+
+    <properties>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.0.33</version>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!--
+            本模块有两个源码根，物理上都不移动任何文件：
+              1) ${project.basedir}/../src  —— 仓库根目录已有的 54 个类
+                 (pojo/dao/service/exception/util/system/controller)
+              2) src/main/java             —— Web 层新增的类
+                 (net.wanhe.dormsystem.web.**)
+            注意：一旦显式设置 sourceDirectory，Maven 就不会再默认包含 src/main/java，
+            因此下面必须用 build-helper 把第二个源码根补回来，否则 Web 层类不会被编译。
+        -->
+        <sourceDirectory>${project.basedir}/../src</sourceDirectory>
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-web-source-root</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/main/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <!--
+                            控制台版的菜单控制器与菜单系统只服务于 Run.main，Web 版不需要它们：
+                            它们的类名与 Web 层控制器同名同包（例如两处都有 BuildingController），
+                            一起编译会报"类名与文件名不匹配"。排除后 Web 层类正常编译，
+                            Spring 组件扫描范围是 *.web.** 也不会扫到它们。
+                        -->
+                        <exclude>net/wanhe/dormsystem/controller/**</exclude>
+                        <exclude>net/wanhe/dormsystem/system/**</exclude>
+                        <exclude>net/wanhe/dormsystem/Run.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>net.wanhe.dormsystem.web.DormWebApplication</mainClass>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-configuration-processor</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

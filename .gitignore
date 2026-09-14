@@ -13,3 +13,16 @@ filelist.txt
 
 # 根级 scratch 文件（下划线前缀约定，避免临时文件误入库）
 /_*
+
+# ===== Web 版（前后端分离）=====
+# Maven 构建产物
+/web/target/
+
+# 前端依赖与构建产物（由 npm install / npm run build 生成）
+/web-frontend/node_modules/
+/web-frontend/dist/
+/web-frontend/.vite/
+
+# 控制台版运行期需要的 Spring jar：体积大且可由 fetch-lib.bat 从本地 Maven 仓库水合，
+# 只保留随项目提供的 mysql 驱动
+/lib/spring-*.jar

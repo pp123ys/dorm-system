@@ -3,7 +3,9 @@ package net.wanhe.dormsystem.web.controller;
 import net.wanhe.dormsystem.exception.BuildingException;
 import net.wanhe.dormsystem.pojo.Building;
 import net.wanhe.dormsystem.service.BuildingService;
+import net.wanhe.dormsystem.service.StatService;
 import net.wanhe.dormsystem.service.impl.BuildingServiceImpl;
+import net.wanhe.dormsystem.service.impl.StatServiceImpl;
 import net.wanhe.dormsystem.web.common.R;
 import net.wanhe.dormsystem.web.dto.BuildingReq;
 import net.wanhe.dormsystem.web.dto.BuildingView;
@@ -25,10 +27,19 @@ public class BuildingApiController {
 
     private final BuildingService buildingService = new BuildingServiceImpl();
 
+    /*
+     * 列表走 StatService.buildingOverview()（与"查询统计"模块同一套带聚合的查询），
+     * 而不是 BuildingService.list()。
+     * 原因：BuildingDao.selectAll() 不会填充 roomCount/bedCount/occupiedCount
+     * （Building POJO 的注释写明这三个字段"仅查询展示用"，只由统计查询带出），
+     * 用它会让楼栋列表页的房间数/床位数显示为 0，与数据概览页的数字自相矛盾。
+     */
+    private final StatService statService = new StatServiceImpl();
+
     @GetMapping
     public R<List<BuildingView>> list() {
         List<BuildingView> views = new ArrayList<>();
-        for (Building b : buildingService.list()) {
+        for (Building b : statService.buildingOverview()) {
             views.add(new BuildingView(b));
         }
         return R.ok(views);

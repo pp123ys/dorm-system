@@ -197,3 +197,41 @@ Spring 5.3.31 的 `InvocableHandlerMethod.doInvoke` 对**受检异常**会包装
 | 中文变问号 | 启动 JVM 必须带 `-Dfile.encoding=UTF-8`；数据库导入用 `--default-character-set=utf8mb4` |
 | 前端 `npm install` 慢 | 用 `npm install --registry=https://registry.npmmirror.com` |
 | `build-web.bat` 报无法删除 jar | 后端服务还在运行占用文件，先停掉再构建 |
+| 单端口模式下直接在地址栏敲 `/students` 报错 | 请用 `build-all.bat` 打包（含 SPA 深链接转发），见第八节 |
+
+---
+
+## 八、单端口部署（把前端打进 jar）
+
+开发时用「Vite 3000 + 后端 8080」两个进程；交付/演示时可以用一条命令打成**单端口**形态：
+前端产物嵌入 jar，只访问 `http://localhost:8080` 即可，不需要 Node 环境。
+
+```bat
+build-all.bat
+java -Dfile.encoding=UTF-8 -jar web\target\dorm-web-1.0.0.jar
+```
+
+`build-all.bat` 做三件事：`npm run build` → 把 `dist` 拷到 `web\src\main\resources\static`
+→ 调 `build-web.bat` 打包。产物约 20.7 MB（比不含前端的 20.3 MB 多约 0.4 MB）。
+
+**与 `build-web.bat` 的分工**：`build-web.bat` **刻意不**嵌入前端——否则每次改前端都要重打后端 jar，
+且 jar 里混入构建产物，开发时更慢也更乱。按场景选一个用即可。
+
+### 已实测的单端口行为
+
+| 请求 | 结果 |
+|---|---|
+| `/`、`/login`、`/dashboard`、`/buildings`、`/rooms`、`/students`、`/stays`、`/stats` | 200，均返回含 `#app` 的页面（**子页面按 F5 刷新不会白屏**） |
+| `/assets/*.js`、`/assets/*.css` | 200，Content-Type 正确（JS/CSS 而非 HTML） |
+| `/api/health`、其余 `/api/**` | 200，JSON |
+| `/api/不存在的地址` | 500 + Spring 默认错误体（**已知限制**，见下） |
+
+深链接可用是因为新增了 `SpaForwardController`：它把「不含点、且没有任何控制器映射」的路径转发到
+`/index.html`，交给前端路由渲染。映射规则只写 `/{path:[^\.]*}` 这一条——**实测教训**：加上
+`/{path:^(?!api)[^\.]*}/**` 之类的第二条规则后，`/assets/xxx.js` 也会被转发成 HTML，
+导致单端口模式整站打不开（JS 拿到的是 HTML），所以这里刻意保持最小规则。
+
+> **已知限制**：`/api/` 下写错地址会返回 500 而不是 404。根因是 Spring Boot 默认不抛
+> `NoHandlerFoundException`，而开启 `spring.mvc.throw-exception-if-no-handler-found` 后又会被
+> 默认错误处理抢先接管（实测如此）。这属于"接口写错时提示不准确"，不影响任何正常功能，
+> 因此保留现状；要修需要自定义 `ErrorController`。
